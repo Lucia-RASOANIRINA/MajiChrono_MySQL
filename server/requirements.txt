@@ -1,0 +1,27 @@
+# Serveur MajiChrono — dependances de production.
+#
+# Versions epinglees au majeur : une montee de version doit etre un acte
+# volontaire, verifie par la suite de tests, jamais une surprise de deploiement.
+
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+a2wsgi==1.10.10
+pydantic==2.10.4
+pydantic-settings==2.7.0
+
+# Base de donnees. PyMySQL est pur Python et fonctionne avec MySQL/MariaDB
+# installe par XAMPP sans compilation native.
+sqlalchemy==2.0.36
+alembic==1.14.0
+pymysql==1.1.1
+
+# Le site web partage `users.password_hash` au format PHP bcrypt ($2y$).
+bcrypt==4.2.1
+pyjwt==2.10.1
+
+# Client HTTP, pour les tests. L'envoi d'e-mail passe par le module `smtplib`
+# livre avec Python : aucun fournisseur n'est cable en dur, et changer
+# d'expediteur ne coute que quatre variables d'environnement.
+httpx==0.28.1
+
+python-multipart==0.0.20

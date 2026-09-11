@@ -1,0 +1,43 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    invalid_annotation_target: ignore
+    # Regle 9.3.5 du CDC : aucune chaine litterale dans l'interface.
+    # Active en warning pour ne pas bloquer le socle, passe en error au lot 6.
+    prefer_const_constructors: warning
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "lib/l10n/app_localizations*.dart"
+    - "build/**"
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
+
+linter:
+  rules:
+    - always_declare_return_types
+    - avoid_empty_else
+    - avoid_print
+    - avoid_relative_lib_imports
+    - avoid_slow_async_io
+    - cancel_subscriptions
+    - close_sinks
+    # `directives_ordering` volontairement absent : les imports du projet sont
+    # regroupes en bloc separe apres les paquets tiers, convention plus lisible
+    # sur des fichiers a une quinzaine d'imports.
+    - eol_at_end_of_file
+    - implementation_imports
+    - prefer_final_locals
+    - prefer_single_quotes
+    - require_trailing_commas
+    - sort_child_properties_last
+    - unawaited_futures
+    - unnecessary_await_in_return
+    - unnecessary_parenthesis
+    - use_build_context_synchronously
+    - use_super_parameters

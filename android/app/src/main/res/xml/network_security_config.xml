@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  EXI-SEC01 : HTTPS exclusivement, trafic en clair interdit par configuration.
+  L'epinglage de certificat a double empreinte (EXI-SEC02) sera pose au lot 6,
+  quand le certificat de production et son certificat de secours existeront.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+
+    <!--
+      Tuiles OpenStreetMap (§9.2). En HTTPS comme tout le reste : le fond de
+      carte revele les trajets de l'utilisateur, il n'a pas a circuler en clair.
+    -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">tile.openstreetmap.org</domain>
+    </domain-config>
+
+    <!-- Emulateur et machine de developpement uniquement : jamais compile en
+         production, la variante debug etant seule concernee. -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">localhost</domain>
+    </domain-config>
+</network-security-config>

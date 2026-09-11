@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Bleu profond de la charte. Duplique ici parce que le systeme peint
+         l'ecran de lancement avant que le moindre code Dart ne s'execute :
+         AppColors n'existe pas encore a ce moment-la. -->
+    <color name="brand_blue">#1E2A78</color>
+	<color name="ic_launcher_background">#1E2A78</color>
+</resources>

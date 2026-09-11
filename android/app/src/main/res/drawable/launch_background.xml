@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Ecran de lancement (Android < 12). Le fond porte le bleu de la charte, et le
+  logo MajiChrono s'affiche centre par-dessus : sans lui, le systeme montrait un
+  aplat bleu nu pendant l'initialisation du moteur Flutter, ce qui se lisait
+  comme un temps mort. Le meme scooter que l'icone de lanceur — un seul symbole,
+  reconnu tout de suite.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/brand_blue" />
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/splash_logo" />
+    </item>
+</layer-list>

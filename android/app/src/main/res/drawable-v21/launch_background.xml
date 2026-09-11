@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Ecran de lancement (Android 5 a 11). Meme dessin que drawable/ : le bleu de la
+  charte, et le logo MajiChrono centre par-dessus pour que l'attente ne soit pas
+  un aplat nu.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/brand_blue" />
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/splash_logo" />
+    </item>
+</layer-list>

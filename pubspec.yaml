@@ -1,0 +1,122 @@
+name: majichrono
+description: "MajiChrono - plateforme de livraison a la demande (Madagascar)."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # --- Animation ---
+  #
+  # `flutter_animate` est en Dart pur et n'embarque aucune ressource. Choisie
+  # contre Lottie et Rive, qui chargent un moteur de rendu et des fichiers
+  # d'animation : plusieurs megaoctets, inacceptables avec un budget d'APK de
+  # 25 Mo deja depasse. Celle-ci n'ajoute que du code, et se retire d'une ligne.
+  flutter_animate: ^4.5.2
+
+  # --- Etat / navigation / injection ---
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+  go_router: ^14.6.2
+
+  # --- Immuabilite / serialisation ---
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # --- Reseau ---
+  dio: ^5.7.0
+
+  # --- Persistance ---
+  drift: ^2.22.1
+  sqlite3: ^2.4.0
+  sqlite3_flutter_libs: ^0.5.26
+  path_provider: ^2.1.5
+  path: ^1.9.0
+  shared_preferences: ^2.3.3
+  flutter_secure_storage: ^9.2.2
+
+  # --- Authentification (module 1) ---
+  # Biometrie de reconnexion (EXI-T04).
+  local_auth: ^2.3.0
+  # Derivation du code PIN : le PIN n'est jamais stocke, seule son empreinte
+  # salee l'est (EXI-T04, EXI-SEC03).
+  crypto: ^3.0.6
+
+  # --- Suivi (module 3) ---
+  # Cartographie : OpenStreetMap, sans cle API facturee et surtout avec des
+  # tuiles pre-telechargeables hors ligne (§9.2, decisif au regard du §4.1).
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  # Notifications locales : canaux Android, liens profonds (EXI-N02, EXI-N04).
+  flutter_local_notifications: ^18.0.1
+  # Appel telephonique et delegation a l'application cartographique (EXI-L07).
+  url_launcher: ^6.3.1
+
+  # --- Livreur (module 4) ---
+  # Position du livreur et flux de mise a jour (EXI-L09, EXI-L11).
+  geolocator: ^13.0.2
+
+  # --- Chaine de responsabilite (module 5) ---
+  # Prise de vue guidee dans l'application, import galerie interdit (EXI-CC11).
+  camera: ^0.11.0+2
+  # Compression maitrisee : 1280 px, 200 Ko par photo (EXI-CC41).
+  image: ^4.3.0
+  # Choix d'une photo de profil depuis la galerie ou l'appareil photo. Sur
+  # Android 13+, la galerie passe par le selecteur systeme (aucune permission a
+  # demander). L'image choisie est redimensionnee via `image` avant l'envoi.
+  image_picker: ^1.1.2
+  # Capture vectorielle de la signature (EXI-CC40).
+  signature: ^5.5.0
+  # Chiffrement au repos des constats non transmis (EXI-CC46, EXI-SEC04).
+  encrypt: ^5.0.3
+  # Export PDF du constat, avec photos, horodatages et signatures (EXI-CC32).
+  pdf: ^3.11.1
+  printing: ^5.13.4
+
+  # --- Socle ---
+  connectivity_plus: ^6.1.0
+  logger: ^2.5.0
+  intl: any
+  uuid: ^4.5.1
+  collection: ^1.18.0
+  package_info_plus: ^8.1.1
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.13
+  freezed: ^2.5.7
+  json_serializable: ^6.9.0
+  riverpod_generator: ^2.6.3
+  drift_dev: ^2.22.1
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - assets/brand/
+
+# Icone de lanceur (module 10) : le logo de l'application remplace celui de
+# Flutter. Les sources sont generees par `dart run tool/generate_brand_assets.dart`.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#1E2A78"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  adaptive_icon_monochrome: "assets/icon/app_icon_monochrome.png"
+  remove_alpha_ios: true

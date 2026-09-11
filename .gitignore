@@ -1,0 +1,18 @@
+# Fichiers et dossiers générés par Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+
+# Fichiers de configuration des éditeurs (VS Code / Android Studio)
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Fichiers de cache Python
+.pytest_cache/
+__pycache__/
+*.pyc
