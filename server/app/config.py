@@ -19,7 +19,11 @@ class Settings(BaseSettings):
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
 
-    environment: Literal["dev", "staging", "prod"] = "dev"
+    app_name: str = "MajiChrono"
+    app_url: str = ""
+    environment: Literal["dev", "staging", "prod"] = Field(
+        default="dev", validation_alias=AliasChoices("ENVIRONMENT", "APP_ENV")
+    )
 
     # --- Base de donnees ---------------------------------------------------
     # MySQL XAMPP est la base locale de cette variante. SQLAlchemy permet de
@@ -65,6 +69,31 @@ class Settings(BaseSettings):
     otp_max_attempts: int = 3
     otp_debug_codes: bool = False
 
+    # --- Limites et suivi -------------------------------------------------
+    max_file_size: int = 5 * 1024 * 1024
+    allowed_extensions: str = "jpg,jpeg,png,pdf,webp"
+    ping_interval_seconds: int = 10
+    offline_grace_minutes: int = 5
+    tracking_stale_seconds: int = 30
+    tracking_offline_seconds: int = 120
+
+    # --- Tarification et carte -------------------------------------------
+    base_fare: int = 2000
+    price_per_km: int = 800
+    tax_rate: float = 0.10
+    currency: str = "MGA"
+    map_default_lat: float = -15.7167
+    map_default_lng: float = 46.3167
+    map_default_zoom: int = 13
+
+    @field_validator("environment", mode="before")
+    @classmethod
+    def _normalize_environment(cls, value: str) -> str:
+        return {
+            "development": "dev",
+            "production": "prod",
+        }.get(str(value).lower(), str(value).lower())
+
     # --- Envoi d'e-mail (SMTP) ---------------------------------------------
     #
     # SMTP est le denominateur commun : Gmail, Resend, Mailgun, SendGrid, un
@@ -86,9 +115,8 @@ class Settings(BaseSettings):
     # pas consommer le quota d'essai en developpement. Tant que cette cle est
     # absente, les codes telephoniques sont journalises au lieu d'etre envoyes.
     sms_api_key: str = ""
-
-    # Nom d'expediteur affiche sur le telephone. Onze caracteres au plus, et
-    # il doit etre declare aupres de la passerelle avant usage.
+    sms_enabled: bool = False
+    sms_provider: str = ""
     sms_sender: str = "MajiChrono"
 
     # --- Paiement (MajiPay) ------------------------------------------------
@@ -119,6 +147,18 @@ class Settings(BaseSettings):
         production, qu'une cle manque.
         """
         return bool(self.smtp_host and self.smtp_user and self.smtp_password)
+
+    @property
+    def allowed_file_extensions(self) -> set[str]:
+        return {
+            value.strip().lower().lstrip(".")
+            for value in self.allowed_extensions.split(",")
+            if value.strip()
+        }
+
+    def estimate_delivery_price(self, distance_km: float) -> int:
+        subtotal = self.base_fare + round(max(distance_km, 0) * self.price_per_km)
+        return round(subtotal * (1 + self.tax_rate))
 
 
 @lru_cache

@@ -17,6 +17,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.deps import require_role
+from app.config import get_settings
 from app.core.errors import not_found, unprocessable
 from app.db import get_db
 from app.models import (
@@ -276,7 +277,9 @@ async def fleet(
                 "lat": state.lat if state else None,
                 "lng": state.lng if state else None,
                 "fixedAt": fixed_at.isoformat() if fixed_at else None,
-                "stale": fixed_at is None or (now - fixed_at) > POSITION_FRESHNESS,
+                "stale": fixed_at is None
+                or (now - fixed_at).total_seconds()
+                > get_settings().tracking_stale_seconds,
             }
         )
     return {"items": items}

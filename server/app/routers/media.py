@@ -15,14 +15,11 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import current_account
 from app.core.errors import not_found, unprocessable
+from app.config import get_settings
 from app.db import get_db
 from app.models import Account, Media
 
 router = APIRouter(prefix="/media", tags=["media"])
-
-_MAX_BYTES = 1024 * 1024  # 1 Mo, redimensionnee cote mobile
-_ALLOWED = {"image/jpeg", "image/png", "image/webp"}
-
 
 class MediaUpload(BaseModel):
     imageBase64: str
@@ -35,8 +32,12 @@ async def upload_media(
     db: Session = Depends(get_db),
     account: Account = Depends(current_account),
 ) -> dict:
+    settings = get_settings()
     content_type = body.contentType.strip().lower()
-    if content_type not in _ALLOWED:
+    extension = content_type.split("/", 1)[-1]
+    if extension == "jpeg":
+        extension = "jpg"
+    if extension not in settings.allowed_file_extensions:
         raise unprocessable("unsupported_type", "Format d'image non accepte")
 
     raw = body.imageBase64
@@ -48,8 +49,10 @@ async def upload_media(
         raise unprocessable("invalid_image", "Image illisible") from None
     if not data:
         raise unprocessable("invalid_image", "Image vide")
-    if len(data) > _MAX_BYTES:
-        raise unprocessable("image_too_large", "Image trop lourde", {"maxBytes": _MAX_BYTES})
+    if len(data) > settings.max_file_size:
+        raise unprocessable(
+            "image_too_large", "Image trop lourde", {"maxBytes": settings.max_file_size}
+        )
 
     media = Media(account_id=account.id, data=data, content_type=content_type)
     db.add(media)

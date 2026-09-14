@@ -28,6 +28,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.deps import Idempotency, current_account, idempotency, require_role
+from app.config import get_settings
 from app.core.errors import conflict, forbidden, not_found, unprocessable
 from app.core.geo import MAX_ACCEPT_KM, haversine_km, point_of
 from app.db import get_db
@@ -71,11 +72,10 @@ router = APIRouter(tags=["compat"])
 
 # Commission de la plateforme, provisoire (§19.2, DO-3). Elle determine ce que le
 # livreur voit comme gain net, ici comme dans le simulateur du mobile.
-PLATFORM_COMMISSION = 0.20
-
-
 def _net(price: int | None) -> int:
-    return round((price or 0) * (1 - PLATFORM_COMMISSION))
+    # La taxe de facturation et la commission livreur sont deux règles
+    # différentes : TAX_RATE ne doit pas modifier le gain net du livreur.
+    return round((price or 0) * 0.80)
 
 
 # --- Offres (l'application interroge `/deliveries/available`) -----------------

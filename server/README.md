@@ -142,6 +142,13 @@ La commande ne renomme, ne supprime, ne crée et ne modifie aucune table. Les
 tables ou colonnes absentes sont signalées et doivent faire l'objet d'une
 migration MySQL explicite et revue.
 
+Les paramètres applicatifs compatibles avec le site sont lus depuis
+`.env.example` : limites de fichiers, suivi GPS, tarification en ariary,
+devise et position par défaut de la carte. `APP_ENV=development` ou
+`APP_ENV=production` est accepté comme alias de `ENVIRONMENT=dev` ou
+`ENVIRONMENT=prod`. Les variables `SMS_ENABLED` et `SMS_API_KEY` restent
+désactivées tant que l'intégration SMS n'est pas validée.
+
 ### Reproduire la base distante en local
 
 Pour inspecter localement les mêmes tables et données sans modifier MySQL,

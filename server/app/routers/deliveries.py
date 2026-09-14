@@ -24,6 +24,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.deps import Idempotency, current_account, idempotency, require_role
+from app.config import get_settings
 from app.core.errors import conflict, forbidden, not_found, unprocessable
 from app.core.geo import (
     MAX_ACCEPT_KM,
@@ -145,6 +146,7 @@ async def create_delivery(
             "invalid_distance",
             "Le depart et l'arrivee doivent etre differents",
         )
+    settings = get_settings()
 
     # Code de retrait au relais : six chiffres, assez pour identifier un colis
     # au comptoir sans etre un secret durable. Genere seulement si un relais est
@@ -166,7 +168,11 @@ async def create_delivery(
         dropoff_json=body.dropoff.model_dump_json(),
         package_json=json.dumps(body.package),
         distance_km=round(distance_km, 3),
-        price_ariary=body.price,
+        price_ariary=(
+            body.price
+            if body.price is not None
+            else settings.estimate_delivery_price(distance_km)
+        ),
         relay_point_id=body.relayPointId,
         relay_pickup_code=relay_code,
         payer=body.payer,
