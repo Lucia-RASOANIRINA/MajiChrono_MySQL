@@ -192,6 +192,7 @@ class _ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final initial = account.displayName.isEmpty
         ? '?'
         : account.displayName.substring(0, 1).toUpperCase();
@@ -263,8 +264,10 @@ class _ProfileHeader extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     // Numero complet : c'est son telephone. Le masque (EXI-T10)
-                    // protege l'autre partie, pas soi-meme.
-                    '$roleLabel · ${account.phone.displayNational}',
+                    // protege l'autre partie, pas soi-meme. Un compte cree par
+                    // e-mail seul n'en a pas encore : on affiche l'adresse a
+                    // la place.
+                    '$roleLabel · ${account.phone?.displayNational ?? account.email ?? l10n.profilePhoneNone}',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: Colors.white.withValues(alpha: 0.8),

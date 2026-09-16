@@ -313,6 +313,16 @@ class AppLocalizationsMg extends AppLocalizations {
   String get profileChange => 'Ovay';
 
   @override
+  String get profileAdd => 'Ampio';
+
+  @override
+  String get profilePhoneNone => 'Tsy voafaritra';
+
+  @override
+  String get phoneVerificationUnavailable =>
+      'Mbola tsy azo atao ny fanamarinana amin\'ny SMS. Andramo indray any aoriana.';
+
+  @override
   String get profileSaved => 'Voahavaozina ny mombamomba';
 
   @override
@@ -732,8 +742,11 @@ class AppLocalizationsMg extends AppLocalizations {
 
   @override
   String authEmailUnlinkedBody(String email) {
-    return 'Mbola tsy misy kaonty MajiChrono mifandray amin\'ny $email. Hamarino ny laharana findainao : izy no fanalahidin\'ny kaontinao, avy eo izahay no hampifandray io adiresy io.';
+    return 'Mbola tsy misy kaonty MajiChrono mifandray amin\'ny $email. Mamoróna ny kaontinao amin\'ity adiresy ity, na manohy amin\'ny laharanao raha tianao hampifandray kaonty efa misy.';
   }
+
+  @override
+  String get authEmailRegisterAction => 'Mamorona kaonty amin\'ity mailaka ity';
 
   @override
   String get authEmailUnlinkedAction => 'Hanohy amin\'ny laharako';

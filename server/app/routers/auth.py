@@ -344,6 +344,56 @@ async def verify_email_code(
     return _session_for_email(db, challenge.destination, device_label=x_device)
 
 
+class EmailRegisterRequest(BaseModel):
+    challengeId: str
+
+
+@router.post("/email/register")
+async def register_with_email(
+    body: EmailRegisterRequest,
+    db: Session = Depends(get_db),
+    x_device: str | None = Header(default=None, alias="X-Device"),
+) -> dict:
+    """Cree un compte a partir d'une adresse deja prouvee, sans numero.
+
+    Pendant du bord "compte inconnu" de `/email/verify` : au lieu de forcer la
+    confirmation d'un numero, l'appelant peut choisir de naitre directement sur
+    l'e-mail deja prouve. Reutilise le meme defi, deja consomme par
+    `/email/verify` — aucun nouveau code n'est envoye.
+    """
+    challenge = db.get(Challenge, body.challengeId)
+    if (
+        challenge is None
+        or challenge.channel is not ChallengeChannel.email
+        or challenge.consumed_at is None
+    ):
+        raise unprocessable("unknown_challenge", "Defi inconnu ou non prouve")
+
+    settings = get_settings()
+    # Fenetre de fraicheur courte : le bouton "Creer mon compte" n'apparait
+    # qu'immediatement apres la preuve de possession, pas des heures plus tard.
+    if datetime.now(timezone.utc) - challenge.consumed_at > timedelta(
+        minutes=settings.otp_ttl_minutes
+    ):
+        raise unprocessable("challenge_expired", "Preuve trop ancienne")
+
+    email = challenge.destination
+    existing = db.scalar(select(Account).where(Account.email == email))
+    if existing is not None:
+        raise conflict(
+            "email_already_registered", "Un compte existe deja pour cette adresse"
+        )
+
+    account = Account(email=email)
+    db.add(account)
+    db.commit()
+
+    return {
+        "session": _issue_session(db, account, device_label=x_device),
+        "account": account.to_json(),
+    }
+
+
 def _session_for_email(
     db: Session, email: str, device_label: str | None = None
 ) -> dict:

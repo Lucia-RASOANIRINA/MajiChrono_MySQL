@@ -139,7 +139,7 @@ void main() {
         challengeId: challenge.challengeId,
         code: challenge.debugCode!,
       );
-      expect(account.phone.e164, '+261340009999');
+      expect(account.phone!.e164, '+261340009999');
     });
   });
 

@@ -18,7 +18,10 @@ class UserAccount {
   });
 
   final String id;
-  final MalagasyPhone phone;
+
+  /// Nul pour un compte cree par e-mail seul, tant qu'aucun numero n'a ete
+  /// ajoute depuis le profil.
+  final MalagasyPhone? phone;
   final UserRole role;
 
   /// Nom d'usage, recompose a partir du prenom et du nom quand ils existent.
@@ -180,7 +183,7 @@ class AccountReady extends AccountResult {
 class AccountProfilePending extends AccountResult {
   const AccountProfilePending(this.phone);
 
-  final MalagasyPhone phone;
+  final MalagasyPhone? phone;
 }
 
 /// Resultat d'une verification OTP : une session, et l'etat du compte associe.

@@ -1,11 +1,13 @@
 ﻿"""Schema de la base.
 
-Le numero de telephone est la **cle d'identite** : une adresse e-mail, un mot de
-passe, un compte Google ne sont que des portes vers un compte qui, lui, possede
-toujours un numero. Cette regle vient du terrain â€” a Antananarivo, un livreur
-appelle son client et un client appelle son livreur ; un compte sans numero
-serait un compte avec lequel on ne peut pas livrer. Le schema l'impose : la
-colonne `phone` est obligatoire et unique.
+Le compte a deux portes d'entree symetriques et facultatives : le numero de
+telephone et l'adresse e-mail. Un compte cree par l'une des deux n'a pas
+forcement l'autre — le profil permet de completer l'identifiant manquant plus
+tard. Les deux colonnes sont donc nullables et uniques ; seule l'absence
+simultanee des deux ne doit jamais arriver (un compte a toujours au moins un
+moyen de contact). Tant qu'un compte n'a pas de numero, un livreur ne peut ni
+l'appeler ni recevoir de SMS de suivi pour lui — un compromis assume, pas un
+oubli.
 """
 
 from __future__ import annotations
@@ -98,8 +100,10 @@ class Account(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
-    # Cle d'identite. Format canonique `+261XXXXXXXXX`, valide en amont.
-    phone: Mapped[str] = mapped_column(String(20), unique=True, index=True)
+    # Premiere porte, facultative et unique. Format canonique `+261XXXXXXXXX`,
+    # valide en amont. Nul pour un compte cree uniquement par e-mail, tant que
+    # le numero n'a pas ete ajoute depuis le profil.
+    phone: Mapped[str | None] = mapped_column(String(20), unique=True, index=True)
 
     # Seconde porte, facultative et unique. Deux comptes ne peuvent pas partager
     # une adresse : le prochain code recu ne dirait plus laquelle ouvrir.

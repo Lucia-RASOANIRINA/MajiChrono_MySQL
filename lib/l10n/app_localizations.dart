@@ -668,6 +668,24 @@ abstract class AppLocalizations {
   /// **'Changer'**
   String get profileChange;
 
+  /// No description provided for @profileAdd.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter'**
+  String get profileAdd;
+
+  /// No description provided for @profilePhoneNone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Non renseigne'**
+  String get profilePhoneNone;
+
+  /// No description provided for @phoneVerificationUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'La verification par SMS n\'est pas encore disponible. Reessayez plus tard.'**
+  String get phoneVerificationUnavailable;
+
   /// No description provided for @profileSaved.
   ///
   /// In fr, this message translates to:
@@ -1451,8 +1469,14 @@ abstract class AppLocalizations {
   /// No description provided for @authEmailUnlinkedBody.
   ///
   /// In fr, this message translates to:
-  /// **'Aucun compte MajiChrono n\'est encore rattache a {email}. Confirmez votre numero de telephone : il reste la cle de votre compte, et nous rattacherons cette adresse ensuite.'**
+  /// **'Aucun compte MajiChrono n\'est encore rattache a {email}. Creez votre compte avec cette adresse, ou continuez avec votre numero si vous preferez rattacher un compte existant.'**
   String authEmailUnlinkedBody(String email);
+
+  /// No description provided for @authEmailRegisterAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Creer mon compte avec cet e-mail'**
+  String get authEmailRegisterAction;
 
   /// No description provided for @authEmailUnlinkedAction.
   ///

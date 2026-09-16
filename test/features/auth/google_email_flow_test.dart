@@ -171,7 +171,7 @@ void main() {
       final verification = (result as EmailLinked).verification;
       expect(verification.account, isA<AccountReady>());
       expect(
-        (verification.account as AccountReady).account.phone.e164,
+        (verification.account as AccountReady).account.phone!.e164,
         '+261340000001',
         reason: 'la session ouverte est bien celle du compte rattache',
       );
@@ -217,7 +217,7 @@ void main() {
       expect(second, isA<EmailLinked>());
       expect(
         ((second as EmailLinked).verification.account as AccountProfilePending)
-            .phone
+            .phone!
             .e164,
         phone.e164,
       );

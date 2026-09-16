@@ -45,7 +45,7 @@ deja prise ».
 #    3.13/3.14 obligeraient a compiler psycopg et pydantic-core a la main)
 py -3.12 -m venv .venv          # ou : python -m venv .venv
 .venv\Scripts\activate          # Windows
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # requirements.txt + uvicorn pour le rechargement local
 
 # 2. MySQL/MariaDB
 # Utilisez MySQL XAMPP en local ou la base MySQL creee dans DirectAdmin.

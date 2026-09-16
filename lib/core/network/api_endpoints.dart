@@ -28,6 +28,10 @@ class ApiEndpoints {
   static const String emailRequest = '/auth/email/request';
   static const String emailVerify = '/auth/email/verify';
 
+  /// Cree un compte sans numero, a partir du defi deja prouve par
+  /// [emailVerify] quand aucun compte n'existait pour l'adresse.
+  static const String emailRegister = '/auth/email/register';
+
   /// Rattache une adresse deja verifiee au compte de la session en cours.
   static const String emailLink = '/auth/email/link';
 

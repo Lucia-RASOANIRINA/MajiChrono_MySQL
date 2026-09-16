@@ -119,6 +119,19 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<OtpVerification> registerWithEmail(String challengeId) async {
+    final json = await _remote.registerWithEmail(challengeId);
+
+    final session = _sessionFrom(json['session'] as Map<String, dynamic>);
+    await _persist(session);
+
+    final accountJson = json['account'] as Map<String, dynamic>;
+    await _local.saveAccount(accountJson);
+
+    return OtpVerification(session: session, account: _accountFrom(accountJson));
+  }
+
+  @override
   Future<EmailVerification> signInWithPassword({
     required String email,
     required String password,
@@ -418,13 +431,11 @@ class AuthRepositoryImpl implements AuthRepository {
   );
 
   AccountResult _accountFrom(Map<String, dynamic> json) {
-    final phone = MalagasyPhone.tryParse(json['phone'] as String? ?? '');
-    if (phone == null) {
-      throw const ServerFailure(
-        statusCode: 500,
-        code: 'invalid_phone_in_account',
-      );
-    }
+    // Nul pour un compte cree par e-mail seul, tant qu'aucun numero n'a ete
+    // ajoute depuis le profil.
+    final phone = json['phone'] != null
+        ? MalagasyPhone.tryParse(json['phone'] as String)
+        : null;
 
     final role = UserRole.fromWire(json['role'] as String?);
     if (role == null) return AccountProfilePending(phone);

@@ -312,6 +312,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileChange => 'Changer';
 
   @override
+  String get profileAdd => 'Ajouter';
+
+  @override
+  String get profilePhoneNone => 'Non renseigne';
+
+  @override
+  String get phoneVerificationUnavailable =>
+      'La verification par SMS n\'est pas encore disponible. Reessayez plus tard.';
+
+  @override
   String get profileSaved => 'Profil mis a jour';
 
   @override
@@ -730,8 +740,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String authEmailUnlinkedBody(String email) {
-    return 'Aucun compte MajiChrono n\'est encore rattache a $email. Confirmez votre numero de telephone : il reste la cle de votre compte, et nous rattacherons cette adresse ensuite.';
+    return 'Aucun compte MajiChrono n\'est encore rattache a $email. Creez votre compte avec cette adresse, ou continuez avec votre numero si vous preferez rattacher un compte existant.';
   }
+
+  @override
+  String get authEmailRegisterAction => 'Creer mon compte avec cet e-mail';
 
   @override
   String get authEmailUnlinkedAction => 'Continuer avec mon numero';

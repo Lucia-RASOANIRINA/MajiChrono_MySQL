@@ -32,6 +32,17 @@ class AuthMockModule extends MockModule {
   /// Defis envoyes par e-mail, memes regles de duree et de tentatives.
   final Map<String, _EmailChallenge> _emailChallenges = {};
 
+  /// Adresses deja prouvees, en attendant que l'appelant choisisse d'en faire
+  /// un compte (bouton "Creer mon compte") plutot que de rattacher un numero.
+  /// `_verifyEmailCode` brule le defi original ; cette table survit un peu
+  /// plus longtemps pour que `_registerWithEmail` puisse encore s'appuyer
+  /// dessus sans redemander un code.
+  final Map<String, String> _provenEmailChallenges = {};
+
+  /// Adresses ayant deja cree un compte sans numero, pour rejeter une
+  /// double inscription (miroir du vrai backend, sans base de donnees).
+  final Set<String> _emailOnlyAccounts = {};
+
   /// Sessions actives, par famille — un appareil connecte. En memoire (le vrai
   /// serveur les range en base) : suffisant pour recetter liste et revocation.
   final Map<String, _Session> _sessions = {};
@@ -86,6 +97,7 @@ class AuthMockModule extends MockModule {
     backend.post(ApiEndpoints.passwordSignUp, _signUpWithPassword);
     backend.post(ApiEndpoints.emailRequest, _requestEmailCode);
     backend.post(ApiEndpoints.emailVerify, _verifyEmailCode);
+    backend.post(ApiEndpoints.emailRegister, _registerWithEmail);
     backend.post(ApiEndpoints.emailLink, _linkEmail);
     backend.post(ApiEndpoints.otpRequest, _requestOtp);
     backend.post(ApiEndpoints.otpVerify, _verifyOtp);
@@ -298,11 +310,54 @@ class AuthMockModule extends MockModule {
     }
 
     _emailChallenges.remove(challengeId);
+    _provenEmailChallenges[challengeId!] = challenge.email;
 
     // Adresse prouvee. Si aucun numero ne s'y rattache, aucune session n'est
-    // ouverte : un compte sans numero ne pourrait ni etre appele par un livreur,
-    // ni recevoir le SMS de suivi (EXI-C24).
+    // ouverte automatiquement : l'appelant choisit alors de creer un compte
+    // sans numero (_registerWithEmail) ou de rattacher un telephone existant.
     return _sessionForEmail(challenge.email, deviceLabel: _deviceOf(req));
+  }
+
+  // --- POST /auth/email/register -----------------------------------------
+
+  Future<MockResponse> _registerWithEmail(
+    MockRequest req,
+    Map<String, String> _,
+  ) async {
+    final challengeId = req.json['challengeId'] as String?;
+    final email = _provenEmailChallenges[challengeId];
+    if (email == null) {
+      return MockResponse.error(
+        422,
+        'unknown_challenge',
+        'Defi inconnu ou non prouve',
+      );
+    }
+
+    if (_emailLinks.containsKey(email) || _emailOnlyAccounts.contains(email)) {
+      return MockResponse.error(
+        409,
+        'email_already_registered',
+        'Un compte existe deja pour cette adresse',
+      );
+    }
+
+    _provenEmailChallenges.remove(challengeId);
+    _emailOnlyAccounts.add(email);
+
+    final account = _Account(
+      id: 'usr_email_${email.hashCode.toRadixString(16)}',
+      phone: null,
+      role: null,
+      name: '',
+      createdAt: DateTime.now(),
+      email: email,
+    );
+
+    return MockResponse.ok({
+      'session': _issueSession(account, deviceLabel: _deviceOf(req)),
+      'account': account.toJson(),
+    });
   }
 
   // --- POST /auth/email/link --------------------------------------------
@@ -330,7 +385,13 @@ class AuthMockModule extends MockModule {
       );
     }
 
-    _emailLinks[email] = account.phone;
+    // `_emailLinks` ne sait representer qu'une porte vers un compte
+    // telephone ; un compte deja cree par e-mail seul n'a pas besoin de ce
+    // rattachement, ce chemin n'est d'ailleurs jamais emprunte pour lui.
+    final phone = account.phone;
+    if (phone != null) {
+      _emailLinks[email] = phone;
+    }
     return MockResponse.noContent();
   }
 
@@ -553,8 +614,9 @@ class AuthMockModule extends MockModule {
       );
     }
     // Le mot de passe est range par adresse, ou par numero a defaut (compte
-    // entre par numero qui s'en pose un pour la premiere fois).
-    final key = account.email ?? account.phone;
+    // entre par numero qui s'en pose un pour la premiere fois). Un compte a
+    // toujours l'un des deux (l'id sert de derniere secours theorique).
+    final key = account.email ?? account.phone ?? account.id;
     final existing = _passwords[key];
     if (existing != null && existing != (req.json['currentPassword'] as String?)) {
       // 403 et non 401 : un 401 ferait tourner l'intercepteur de rafraichissement
@@ -652,9 +714,14 @@ class AuthMockModule extends MockModule {
       );
     }
     // Repointe le rattachement : l'ancienne adresse de ce compte s'efface, la
-    // nouvelle prend sa place.
-    _emailLinks.removeWhere((_, phone) => phone == account.phone);
-    _emailLinks[newEmail] = account.phone;
+    // nouvelle prend sa place. Un compte sans numero n'a rien a repointer
+    // dans cette table, qui ne sait representer qu'une porte vers un
+    // telephone.
+    final phone = account.phone;
+    _emailLinks.removeWhere((_, value) => value == phone);
+    if (phone != null) {
+      _emailLinks[newEmail] = phone;
+    }
 
     final updated = account.copyWith(email: newEmail);
     return MockResponse.ok({
@@ -1018,7 +1085,7 @@ class _Account {
 
   factory _Account.fromClaims(Map<String, dynamic> claims) => _Account(
     id: '${claims['sub']}',
-    phone: '${claims['phone']}',
+    phone: claims['phone'] as String?,
     role: claims['role'] as String?,
     name: '${claims['name'] ?? ''}',
     createdAt: DateTime.tryParse('') ?? DateTime.now(),
@@ -1030,7 +1097,7 @@ class _Account {
   );
 
   final String id;
-  final String phone;
+  final String? phone;
   final String? role;
   final String name;
   final DateTime createdAt;

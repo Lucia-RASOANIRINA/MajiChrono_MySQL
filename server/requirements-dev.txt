@@ -1,0 +1,9 @@
+# Dependances supplementaires pour le developpement local uniquement.
+#
+# `uvicorn[standard]` sert a lancer le serveur ASGI en local
+# (`uvicorn app.main:app --reload`, voir README.md). En production,
+# DirectAdmin/Passenger sert l'application via `passenger_wsgi.py` + a2wsgi :
+# n'installez pas ce fichier sur l'hebergement.
+
+-r requirements.txt
+uvicorn[standard]==0.34.0

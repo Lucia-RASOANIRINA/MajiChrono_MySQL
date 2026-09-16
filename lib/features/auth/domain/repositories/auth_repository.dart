@@ -40,6 +40,12 @@ abstract interface class AuthRepository {
   /// que la prochaine entree se fasse par Google sans repasser par le SMS.
   Future<void> linkEmail(String email);
 
+  /// Cree un compte a partir d'un defi e-mail deja prouve (issue de
+  /// [verifyEmailCode] quand aucun compte n'existe), sans passer par le
+  /// numero. Le compte nait sans telephone ; il pourra en ajouter un plus
+  /// tard depuis le profil.
+  Future<OtpVerification> registerWithEmail(String challengeId);
+
   /// Connexion par couple e-mail / mot de passe.
   ///
   /// Meme issue que le code par e-mail : session ouverte si l'adresse porte un

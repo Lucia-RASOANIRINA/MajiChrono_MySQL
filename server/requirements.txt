@@ -2,9 +2,14 @@
 #
 # Versions epinglees au majeur : une montee de version doit etre un acte
 # volontaire, verifie par la suite de tests, jamais une surprise de deploiement.
+#
+# En production (DirectAdmin/Passenger), l'application est servie via
+# `passenger_wsgi.py` + a2wsgi : uvicorn n'est jamais importe par le
+# processus. Ses extras "standard" (uvloop, httptools...) exigent une
+# compilation native qui echoue souvent sur l'hebergement mutualise et sont
+# inutiles ici. Pour lancer le serveur en local, voir requirements-dev.txt.
 
 fastapi==0.115.6
-uvicorn[standard]==0.34.0
 a2wsgi==1.10.10
 pydantic==2.10.4
 pydantic-settings==2.7.0
@@ -19,9 +24,10 @@ pymysql==1.1.1
 bcrypt==4.2.1
 pyjwt==2.10.1
 
-# Client HTTP, pour les tests. L'envoi d'e-mail passe par le module `smtplib`
-# livre avec Python : aucun fournisseur n'est cable en dur, et changer
-# d'expediteur ne coute que quatre variables d'environnement.
+# Client HTTP utilise par les integrations MajiPay et SMS (app/core/majipay.py,
+# app/core/sms.py), et par la suite de tests. L'envoi d'e-mail passe par le
+# module `smtplib` livre avec Python : aucun fournisseur n'est cable en dur,
+# et changer d'expediteur ne coute que quatre variables d'environnement.
 httpx==0.28.1
 
 python-multipart==0.0.20

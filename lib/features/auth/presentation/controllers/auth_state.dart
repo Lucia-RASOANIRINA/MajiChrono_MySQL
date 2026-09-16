@@ -30,7 +30,7 @@ class AuthUnauthenticated extends AuthState {
 class AuthProfilePending extends AuthState {
   const AuthProfilePending(this.phone);
 
-  final MalagasyPhone phone;
+  final MalagasyPhone? phone;
 }
 
 class AuthAuthenticated extends AuthState {

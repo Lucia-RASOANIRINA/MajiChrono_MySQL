@@ -139,6 +139,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
+  /// Ajouter un numero manquant n'ouvre pas le meme flux qu'en changer un :
+  /// la passerelle SMS n'est pas encore branchee (elle journalise sans rien
+  /// envoyer, `app/core/sms.py`), un code n'arriverait donc jamais. Mieux
+  /// vaut le dire clairement que de laisser l'utilisateur attendre un SMS
+  /// qui ne viendra pas.
+  void _onPhoneTileTap() {
+    final l10n = AppLocalizations.of(context);
+    _snack(l10n.phoneVerificationUnavailable);
+  }
+
   Future<void> _changePhone() async {
     final l10n = AppLocalizations.of(context);
     final repo = ref.read(authRepositoryProvider);
@@ -285,16 +295,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               icon: Icons.alternate_email,
               label: l10n.profileEmailLabel,
               value: account.email ?? l10n.profileEmailNone,
-              actionLabel: l10n.profileChange,
+              actionLabel: account.email == null
+                  ? l10n.profileAdd
+                  : l10n.profileChange,
               onTap: _busy ? null : _changeEmail,
             ),
             const SizedBox(height: AppSpacing.sm),
             _ContactTile(
               icon: Icons.smartphone,
               label: l10n.profilePhoneLabel,
-              value: account.phone.displayNational,
-              actionLabel: l10n.profileChange,
-              onTap: _busy ? null : _changePhone,
+              value: account.phone?.displayNational ?? l10n.profilePhoneNone,
+              actionLabel: account.phone == null
+                  ? l10n.profileAdd
+                  : l10n.profileChange,
+              onTap: _busy
+                  ? null
+                  : (account.phone == null ? _onPhoneTileTap : _changePhone),
             ),
           ],
         ),
