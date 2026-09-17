@@ -492,7 +492,7 @@ class _DriverCard extends StatelessWidget {
   }
 }
 
-/// Partage du lien de suivi public (EXI-C24, differenciant D9).
+/// Copie directe du lien de suivi public (EXI-C24, differenciant D9).
 class _ShareTrackingCard extends StatelessWidget {
   const _ShareTrackingCard({this.code});
 
@@ -512,19 +512,11 @@ class _ShareTrackingCard extends StatelessWidget {
     return McCard(
       padding: EdgeInsets.zero,
       child: ListTile(
-        leading: const Icon(Icons.share_outlined),
-        title: Text(l10n.trackingShare),
+        leading: const Icon(Icons.link_outlined),
+        title: Text(l10n.trackingCopyLink),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (code != null)
-              Text(
-                code!,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
             Text(
               url,
               maxLines: 1,
@@ -533,6 +525,14 @@ class _ShareTrackingCard extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+            if (code != null)
+              Text(
+                l10n.trackingParcelCode(code!),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
           ],
         ),
         trailing: const Icon(Icons.copy_outlined),
@@ -540,7 +540,7 @@ class _ShareTrackingCard extends StatelessWidget {
         // le colis dans son navigateur (D9).
         onTap: () async {
           await Clipboard.setData(
-            ClipboardData(text: l10n.trackingShareMessage(url)),
+            ClipboardData(text: url),
           );
           if (!context.mounted) return;
           ScaffoldMessenger.of(

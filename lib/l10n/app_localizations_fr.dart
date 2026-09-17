@@ -2747,6 +2747,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get trackingShare => 'Partager le suivi';
 
   @override
+  String get trackingCopyLink => 'Copier le lien de suivi';
+
+  @override
+  String trackingParcelCode(String code) {
+    return 'Code de suivi du colis : $code';
+  }
+
+  @override
   String trackingShareMessage(String url) {
     return 'Suivez votre colis MajiChrono : $url';
   }

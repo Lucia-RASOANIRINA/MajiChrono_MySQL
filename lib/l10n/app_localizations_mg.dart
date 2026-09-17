@@ -2751,6 +2751,14 @@ class AppLocalizationsMg extends AppLocalizations {
   String get trackingShare => 'Zaraina ny fanarahana';
 
   @override
+  String get trackingCopyLink => 'Adikao ny rohy fanarahana';
+
+  @override
+  String trackingParcelCode(String code) {
+    return 'Kaody fanarahana ny entana : $code';
+  }
+
+  @override
   String trackingShareMessage(String url) {
     return 'Araho ny entanao MajiChrono : $url';
   }

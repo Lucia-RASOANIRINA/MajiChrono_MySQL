@@ -5210,6 +5210,18 @@ abstract class AppLocalizations {
   /// **'Partager le suivi'**
   String get trackingShare;
 
+  /// No description provided for @trackingCopyLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'Copier le lien de suivi'**
+  String get trackingCopyLink;
+
+  /// No description provided for @trackingParcelCode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code de suivi du colis : {code}'**
+  String trackingParcelCode(String code);
+
   /// No description provided for @trackingShareMessage.
   ///
   /// In fr, this message translates to:
