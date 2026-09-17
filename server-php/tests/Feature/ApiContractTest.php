@@ -95,5 +95,6 @@ class ApiContractTest extends TestCase
         $this->postJson('/deliveries/1/incidents', ['kind' => 'other'])->assertStatus(401);
         $this->getJson('/deliveries/1/incidents')->assertStatus(401);
         $this->postJson('/driver/status', ['online' => false])->assertStatus(401);
+        $this->postJson('/tracking/batch', ['points' => []])->assertStatus(401);
     }
 }

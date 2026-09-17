@@ -7,6 +7,7 @@ use App\Models\Delivery;
 use App\Models\DeliveryEvent;
 use App\Models\DeliveryIncident;
 use App\Models\DriverState;
+use App\Models\PositionSample;
 use App\Support\CurrentAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -40,6 +41,7 @@ class DeliveryController extends Controller
         if ($online === null) {
             throw ApiException::unprocessable('invalid_online_status', 'Statut de disponibilite invalide');
         }
+
         if ($online && $account->kyc_status !== 'approved') {
             throw ApiException::forbidden('kyc_not_approved', 'Votre dossier n\'est pas encore valide');
         }
@@ -56,6 +58,64 @@ class DeliveryController extends Controller
             'lng' => $state->lng,
             'fixedAt' => optional($state->fixed_at)->toIso8601String(),
         ]);
+    }
+
+    public function trackingBatch(Request $request)
+    {
+        $account = CurrentAccount::resolve($request);
+        $this->requireDriver($account);
+
+        $points = $request->input('points');
+        if (! is_array($points)) {
+            throw ApiException::unprocessable('invalid_points', 'Les positions sont obligatoires');
+        }
+        if (count($points) > 50) {
+            throw ApiException::unprocessable('batch_too_large', 'Lot de plus de 50 points');
+        }
+
+        $accepted = 0;
+        $latest = null;
+        foreach ($points as $point) {
+            if (! is_array($point)) {
+                continue;
+            }
+            $coords = is_array($point['point'] ?? null) ? $point['point'] : [];
+            $lat = $coords['lat'] ?? $coords['latitude'] ?? null;
+            $lng = $coords['lng'] ?? $coords['longitude'] ?? null;
+            $fixedAt = $point['at'] ?? null;
+            if (! is_numeric($lat) || ! is_numeric($lng) || ! is_string($fixedAt)) {
+                continue;
+            }
+
+            $sample = PositionSample::firstOrCreate(
+                ['driver_id' => $account->id, 'fixed_at' => $fixedAt],
+                [
+                    'delivery_id' => $point['deliveryId'] ?? null,
+                    'lat' => (float) $lat,
+                    'lng' => (float) $lng,
+                    'accuracy_m' => is_numeric($point['accuracy'] ?? null) ? (float) $point['accuracy'] : null,
+                ],
+            );
+            if ($sample->wasRecentlyCreated) {
+                $accepted++;
+            }
+            if ($latest === null || strtotime($fixedAt) > strtotime((string) $latest['at'])) {
+                $latest = ['lat' => (float) $lat, 'lng' => (float) $lng, 'at' => $fixedAt];
+            }
+        }
+
+        if ($latest !== null) {
+            $state = DriverState::firstOrCreate(['user_id' => $account->id]);
+            if ($state->fixed_at === null || strtotime($latest['at']) > $state->fixed_at->timestamp) {
+                $state->lat = $latest['lat'];
+                $state->lng = $latest['lng'];
+                $state->fixed_at = $latest['at'];
+                $state->updated_at = Carbon::now();
+                $state->save();
+            }
+        }
+
+        return response()->json(['accepted' => $accepted, 'received' => count($points)]);
     }
 
     public function available(Request $request)

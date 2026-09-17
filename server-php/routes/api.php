@@ -53,6 +53,7 @@ Route::get('/track/{token}', [DeliveryController::class, 'track']);
 Route::get('/public/track/{token}', [DeliveryController::class, 'track']);
 Route::get('/deliveries/available', [DeliveryController::class, 'available']);
 Route::post('/driver/status', [DeliveryController::class, 'driverStatus']);
+Route::post('/tracking/batch', [DeliveryController::class, 'trackingBatch']);
 Route::prefix('deliveries')->group(function () {
     Route::get('', [DeliveryController::class, 'index']);
     Route::post('', [DeliveryController::class, 'store']);
