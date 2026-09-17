@@ -219,7 +219,7 @@
   "authChoiceEmailNote": "Google, Facebook, Twitter ou mot de passe.",
   "authSmsUnavailableTitle": "Verification par SMS indisponible",
   "authSmsUnavailableMessage": "L'envoi de SMS n'est pas encore disponible. Inscrivez-vous avec votre adresse e-mail : le code de verification vous sera envoye par e-mail.",
-  "authSmsUnavailableAction": "S'inscrire avec mon e-mail",
+  "authSmsUnavailableAction": "Continuer avec mon e-mail",
   "authSignInTitle": "Connexion a votre compte",
   "authSignUpTitle": "Creer votre compte",
   "authFieldEmail": "E-mail",

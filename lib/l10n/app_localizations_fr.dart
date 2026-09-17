@@ -641,7 +641,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'envoi de SMS n\'est pas encore disponible. Inscrivez-vous avec votre adresse e-mail : le code de verification vous sera envoye par e-mail.';
 
   @override
-  String get authSmsUnavailableAction => 'S\'inscrire avec mon e-mail';
+  String get authSmsUnavailableAction => 'Continuer avec mon e-mail';
 
   @override
   String get authSignInTitle => 'Connexion a votre compte';

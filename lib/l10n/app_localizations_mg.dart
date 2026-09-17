@@ -643,7 +643,7 @@ class AppLocalizationsMg extends AppLocalizations {
       'Tsy mbola azo alefa ny SMS. Manorata amin\'ny adiresy mailaka : halefa amin\'ny mailaka ny kaody fanamarinana.';
 
   @override
-  String get authSmsUnavailableAction => 'Hisoratra amin\'ny mailaka';
+  String get authSmsUnavailableAction => 'Hanohy amin\'ny mailaka';
 
   @override
   String get authSignInTitle => 'Fidirana amin\'ny kaontinao';

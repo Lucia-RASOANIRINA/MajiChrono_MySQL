@@ -1277,7 +1277,7 @@ abstract class AppLocalizations {
   /// No description provided for @authSmsUnavailableAction.
   ///
   /// In fr, this message translates to:
-  /// **'S\'inscrire avec mon e-mail'**
+  /// **'Continuer avec mon e-mail'**
   String get authSmsUnavailableAction;
 
   /// No description provided for @authSignInTitle.

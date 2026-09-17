@@ -11,7 +11,6 @@ import 'package:majichrono/app/theme/design_tokens.dart';
 import 'package:majichrono/core/error/failure.dart';
 import 'package:majichrono/core/i18n/locale_controller.dart';
 import 'package:majichrono/features/auth/domain/value_objects/malagasy_phone.dart';
-import 'package:majichrono/features/auth/domain/entities/auth_entities.dart';
 import 'package:majichrono/features/auth/presentation/providers/auth_providers.dart';
 import 'package:majichrono/features/auth/presentation/widgets/auth_branding.dart';
 import 'package:majichrono/features/auth/presentation/widgets/google_account_sheet.dart';
@@ -53,52 +52,37 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
     final phone = _phone;
     if (phone == null || _busy) return;
 
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-
-    try {
-      if (widget.isSignUp) {
-        final challenge = await ref
-            .read(authRepositoryProvider)
-            .requestOtp(phone);
-        if (!mounted) return;
-        unawaited(context.push(AppRoutes.authOtp, extra: challenge));
-        return;
-      }
-
-      final result = await ref
-          .read(authRepositoryProvider)
-          .loginWithPhone(
-            phone: phone,
-            password: _passwordController.text.trim().isEmpty
-                ? null
-                : _passwordController.text,
-          );
-      if (!mounted) return;
-      switch (result) {
-        case PhoneOtpRequired(:final challenge):
-          unawaited(context.push(AppRoutes.authOtp, extra: challenge));
-        case PhonePasswordVerified(:final verification):
-          await ref
-              .read(authControllerProvider.notifier)
-              .onOtpVerified(verification);
-      }
-    } on ConflictFailure catch (failure) {
-      if (!mounted) return;
-      if (failure.details?['code'] == 'password_required' ||
-          _passwordController.text.isEmpty) {
-        setState(() => _error = 'Ce compte utilise un mot de passe.');
-      }
-    } on Failure catch (failure) {
-      if (!mounted) return;
-      setState(
-        () => _error = failure.localizedMessage(AppLocalizations.of(context)),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
+    final l10n = AppLocalizations.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.mark_email_unread_outlined),
+        title: Text(
+          l10n.authSmsUnavailableTitle,
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          l10n.authSmsUnavailableMessage,
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              if (!mounted) return;
+              context.push(
+                widget.isSignUp ? AppRoutes.authSignUp : AppRoutes.authSignIn,
+              );
+            },
+            child: Text(l10n.authSmsUnavailableAction),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _continueWithGoogle() async {
@@ -223,35 +207,6 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
                             style: theme.textTheme.headlineSmall?.copyWith(
                               color: AppColors.primary,
                               fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          Container(
-                            margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                            padding: const EdgeInsets.all(AppSpacing.sm),
-                            decoration: BoxDecoration(
-                              color: Colors.amber.shade50,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.amber.shade300),
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  Icons.sms_failed_outlined,
-                                  color: Colors.amber.shade900,
-                                ),
-                                const SizedBox(width: AppSpacing.sm),
-                                Expanded(
-                                  child: Text(
-                                    l10n.authSmsUnavailableMessage,
-                                    style: TextStyle(
-                                      color: Colors.amber.shade900,
-                                      fontSize: 13,
-                                      height: 1.3,
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ),
                           ),
                           const SizedBox(height: AppSpacing.md),

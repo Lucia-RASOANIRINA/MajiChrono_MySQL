@@ -125,14 +125,6 @@ class AuthChoiceScreen extends ConsumerWidget {
                               color: Colors.white.withValues(alpha: 0.75),
                             ),
                           ),
-                          const SizedBox(height: AppSpacing.md),
-                          _SmsUnavailableNotice(
-                            title: l10n.authSmsUnavailableTitle,
-                            message: l10n.authSmsUnavailableMessage,
-                            actionLabel: l10n.authSmsUnavailableAction,
-                            onAction: () =>
-                                context.push(AppRoutes.authSignUp),
-                          ),
                           const Spacer(),
 
                           _ChoiceCard(
@@ -178,70 +170,6 @@ class AuthChoiceScreen extends ConsumerWidget {
     );
   }
 
-}
-
-class _SmsUnavailableNotice extends StatelessWidget {
-  const _SmsUnavailableNotice({
-    required this.title,
-    required this.message,
-    required this.actionLabel,
-    required this.onAction,
-  });
-
-  final String title;
-  final String message;
-  final String actionLabel;
-  final VoidCallback onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.info_outline, color: Colors.white),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            message,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.86),
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          OutlinedButton(
-            onPressed: onAction,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: const BorderSide(color: Colors.white),
-            ),
-            child: Text(actionLabel),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _BlueSpaceAccent extends StatelessWidget {
