@@ -30,6 +30,12 @@ class DriverOnlineController extends Notifier<bool> {
       ref.watch(prefsStoreProvider).getBool(PrefsStore.keyDriverOnline);
 
   Future<void> set({required bool online}) async {
+    await ref
+        .read(apiClientProvider)
+        .post<Map<String, dynamic>>(
+          ApiEndpoints.driverStatus,
+          body: {'online': online},
+        );
     state = online;
     await ref
         .read(prefsStoreProvider)

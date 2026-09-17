@@ -2,9 +2,9 @@
 
 namespace App\Support;
 
+use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-use Firebase\JWT\ExpiredException;
 use Firebase\JWT\SignatureInvalidException;
 use Illuminate\Support\Carbon;
 use UnexpectedValueException;
@@ -22,7 +22,9 @@ class Security
      */
     public static function hashSecret(string $value): string
     {
-        return password_hash($value, PASSWORD_BCRYPT, ['cost' => 10]);
+        return password_hash($value, PASSWORD_BCRYPT, [
+            'cost' => (int) config('app.bcrypt_rounds', 12),
+        ]);
     }
 
     /**

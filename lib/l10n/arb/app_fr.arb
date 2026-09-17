@@ -259,6 +259,10 @@
   "@authEmailUnlinkedBody": { "placeholders": { "email": { "type": "String" } } },
   "authEmailRegisterAction": "Creer mon compte avec cet e-mail",
   "authEmailUnlinkedAction": "Continuer avec mon numero",
+  "authEmailCreatedTitle": "Compte créé avec succès",
+  "authEmailCreatedBody": "Votre adresse e-mail est vérifiée. Vous pouvez ajouter un numéro de téléphone maintenant ou continuer sans numéro.",
+  "authEmailAddPhoneAction": "Ajouter un numéro",
+  "authEmailContinueAction": "Continuer",
   "authEmailLinked": "Adresse rattachee a votre compte",
 
   "authProfileTitle": "Votre profil",

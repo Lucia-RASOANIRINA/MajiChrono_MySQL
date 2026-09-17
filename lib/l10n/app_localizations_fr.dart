@@ -760,6 +760,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get authEmailUnlinkedAction => 'Continuer avec mon numero';
 
   @override
+  String get authEmailCreatedTitle => 'Compte créé avec succès';
+
+  @override
+  String get authEmailCreatedBody =>
+      'Votre adresse e-mail est vérifiée. Vous pouvez ajouter un numéro de téléphone maintenant ou continuer sans numéro.';
+
+  @override
+  String get authEmailAddPhoneAction => 'Ajouter un numéro';
+
+  @override
+  String get authEmailContinueAction => 'Continuer';
+
+  @override
   String get authEmailLinked => 'Adresse rattachee a votre compte';
 
   @override

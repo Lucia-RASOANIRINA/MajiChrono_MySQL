@@ -762,6 +762,19 @@ class AppLocalizationsMg extends AppLocalizations {
   String get authEmailUnlinkedAction => 'Hanohy amin\'ny laharako';
 
   @override
+  String get authEmailCreatedTitle => 'Vita soa aman-tsara ny kaontinao';
+
+  @override
+  String get authEmailCreatedBody =>
+      'Voamarina ny adiresy mailakao. Afaka manampy laharan-telefaonina ianao izao na manohy tsy misy laharana.';
+
+  @override
+  String get authEmailAddPhoneAction => 'Hanampy laharan-telefaonina';
+
+  @override
+  String get authEmailContinueAction => 'Tohizo';
+
+  @override
   String get authEmailLinked => 'Voarohy amin\'ny kaontinao ny adiresy';
 
   @override

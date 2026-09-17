@@ -10,6 +10,7 @@ import 'package:majichrono/app/router/app_routes.dart';
 import 'package:majichrono/app/theme/app_colors.dart';
 import 'package:majichrono/app/theme/design_tokens.dart';
 import 'package:majichrono/core/error/failure.dart';
+import 'package:majichrono/features/auth/domain/entities/auth_entities.dart';
 import 'package:majichrono/features/auth/domain/entities/google_entities.dart';
 import 'package:majichrono/features/auth/presentation/providers/auth_providers.dart';
 import 'package:majichrono/l10n/app_localizations.dart';
@@ -37,6 +38,7 @@ class _EmailCodeScreenState extends ConsumerState<EmailCodeScreen>
   String? _unlinked;
   bool _registerBusy = false;
   String? _registerError;
+  OtpVerification? _createdVerification;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -132,7 +134,30 @@ class _EmailCodeScreenState extends ConsumerState<EmailCodeScreen>
         case EmailUnlinked(:final email):
           ref.read(pendingEmailLinkProvider.notifier).state = email;
           _ticker?.cancel();
-          if (mounted) setState(() => _unlinked = email);
+          if (mounted) {
+            setState(() {
+              _unlinked = email;
+              _registerBusy = true;
+            });
+          }
+          try {
+            final verification = await ref
+                .read(authRepositoryProvider)
+                .registerWithEmail(_challenge.challengeId);
+            if (mounted) {
+              setState(() {
+                _createdVerification = verification;
+                _registerBusy = false;
+              });
+            }
+          } on Failure catch (failure) {
+            if (mounted) {
+              setState(() {
+                _registerBusy = false;
+                _registerError = failure.localizedMessage(l10n);
+              });
+            }
+          }
       }
     } on ValidationFailure catch (failure) {
       if (!mounted) return;
@@ -154,28 +179,11 @@ class _EmailCodeScreenState extends ConsumerState<EmailCodeScreen>
   /// Cree un compte a partir de l'e-mail deja prouve, sans passer par le
   /// numero (bouton "Creer mon compte avec cet e-mail" de [_UnlinkedPanel]).
   Future<void> _registerWithEmail() async {
-    if (_registerBusy) return;
-    setState(() {
-      _registerBusy = true;
-      _registerError = null;
-    });
-    try {
-      final verification = await ref
-          .read(authRepositoryProvider)
-          .registerWithEmail(_challenge.challengeId);
-      await ref
-          .read(authControllerProvider.notifier)
-          .onOtpVerified(verification);
-    } on Failure catch (failure) {
-      if (!mounted) return;
-      setState(
-        () => _registerError = failure.localizedMessage(
-          AppLocalizations.of(context),
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _registerBusy = false);
-    }
+    final verification = _createdVerification;
+    if (_registerBusy || verification == null) return;
+    await ref
+        .read(authControllerProvider.notifier)
+        .onOtpVerified(verification);
   }
 
   Future<void> _resend() async {
@@ -218,6 +226,7 @@ class _EmailCodeScreenState extends ConsumerState<EmailCodeScreen>
       return _UnlinkedPanel(
         email: _unlinked!,
         busy: _registerBusy,
+        created: _createdVerification != null,
         error: _registerError,
         onRegister: _registerWithEmail,
       );
@@ -737,12 +746,14 @@ class _UnlinkedPanel extends StatelessWidget {
   const _UnlinkedPanel({
     required this.email,
     required this.busy,
+    required this.created,
     required this.error,
     required this.onRegister,
   });
 
   final String email;
   final bool busy;
+  final bool created;
   final String? error;
   final VoidCallback onRegister;
 
@@ -808,7 +819,9 @@ class _UnlinkedPanel extends StatelessWidget {
                         ),
                         const SizedBox(height: AppSpacing.md),
                         Text(
-                          l10n.authEmailUnlinkedTitle,
+                          created
+                              ? l10n.authEmailCreatedTitle
+                              : l10n.authEmailUnlinkedTitle,
                           textAlign: TextAlign.center,
                           style: theme.textTheme.headlineMedium?.copyWith(
                             color: Colors.white,
@@ -818,7 +831,9 @@ class _UnlinkedPanel extends StatelessWidget {
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         Text(
-                          l10n.authEmailUnlinkedBody(email),
+                          created
+                              ? l10n.authEmailCreatedBody
+                              : l10n.authEmailUnlinkedBody(email),
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: Colors.white.withValues(alpha: 0.8),
@@ -849,9 +864,33 @@ class _UnlinkedPanel extends StatelessWidget {
                           const SizedBox(height: AppSpacing.sm),
                         ],
 
-                        // Action principale : le compte nait ici, sans
-                        // numero. C'est le parcours attendu pour qui n'en a
-                        // pas encore renseigne un.
+                        if (created) ...[
+                          SizedBox(
+                            height: 52,
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: busy
+                                  ? null
+                                  : () => context.go(AppRoutes.authPhone),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: AppColors.primary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: Text(
+                                l10n.authEmailAddPhoneAction,
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                        ],
                         SizedBox(
                           height: 52,
                           width: double.infinity,
@@ -878,7 +917,9 @@ class _UnlinkedPanel extends StatelessWidget {
                                     ),
                                   )
                                 : Text(
-                                    l10n.authEmailRegisterAction,
+                                    created
+                                        ? l10n.authEmailContinueAction
+                                        : l10n.authEmailRegisterAction,
                                     style: const TextStyle(
                                       fontSize: 17,
                                       fontWeight: FontWeight.w700,
@@ -890,19 +931,20 @@ class _UnlinkedPanel extends StatelessWidget {
 
                         // Option secondaire : rattacher plutot un compte
                         // telephone deja existant.
-                        TextButton(
-                          onPressed: busy
-                              ? null
-                              : () => context.go(AppRoutes.authPhone),
-                          child: Text(
-                            l10n.authEmailUnlinkedAction,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
+                        if (!created)
+                          TextButton(
+                            onPressed: busy
+                                ? null
+                                : () => context.go(AppRoutes.authPhone),
+                            child: Text(
+                              l10n.authEmailUnlinkedAction,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.xs),

@@ -1502,6 +1502,30 @@ abstract class AppLocalizations {
   /// **'Continuer avec mon numero'**
   String get authEmailUnlinkedAction;
 
+  /// No description provided for @authEmailCreatedTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compte créé avec succès'**
+  String get authEmailCreatedTitle;
+
+  /// No description provided for @authEmailCreatedBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre adresse e-mail est vérifiée. Vous pouvez ajouter un numéro de téléphone maintenant ou continuer sans numéro.'**
+  String get authEmailCreatedBody;
+
+  /// No description provided for @authEmailAddPhoneAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter un numéro'**
+  String get authEmailAddPhoneAction;
+
+  /// No description provided for @authEmailContinueAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Continuer'**
+  String get authEmailContinueAction;
+
   /// No description provided for @authEmailLinked.
   ///
   /// In fr, this message translates to:

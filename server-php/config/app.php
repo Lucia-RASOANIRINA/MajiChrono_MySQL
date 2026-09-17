@@ -84,6 +84,8 @@ return [
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
 
+    'bcrypt_rounds' => (int) env('BCRYPT_ROUNDS', 12),
+
     /*
     |--------------------------------------------------------------------------
     | Encryption Key

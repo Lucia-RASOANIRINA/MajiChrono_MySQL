@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\MediaController;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +17,17 @@ Route::prefix('auth')->group(function () {
     Route::post('/email/request', [AuthController::class, 'requestEmailCode']);
     Route::post('/email/verify', [AuthController::class, 'verifyEmailCode']);
     Route::post('/email/register', [AuthController::class, 'registerWithEmail']);
+    Route::post('/password/signin', [AuthController::class, 'signInWithPassword']);
+    Route::post('/password/signup', [AuthController::class, 'signUpWithPassword']);
+    Route::post('/password/reset', [AuthController::class, 'resetPassword']);
+    Route::post('/email/change/request', [AuthController::class, 'requestEmailChange']);
+    Route::post('/email/change/verify', [AuthController::class, 'verifyEmailChange']);
+    Route::post('/phone/change/request', [AuthController::class, 'requestPhoneChange']);
+    Route::post('/phone/change/verify', [AuthController::class, 'verifyPhoneChange']);
+    Route::post('/email/link', [AuthController::class, 'linkEmail']);
+    Route::post('/password/change', [AuthController::class, 'changePassword']);
+    Route::get('/sessions', [AuthController::class, 'sessions']);
+    Route::delete('/sessions/{family}', [AuthController::class, 'revokeSession']);
 
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -36,3 +48,18 @@ Route::prefix('addresses')->group(function () {
 
 Route::post('/media', [MediaController::class, 'store']);
 Route::get('/media/{mediaId}', [MediaController::class, 'show']);
+
+Route::get('/track/{token}', [DeliveryController::class, 'track']);
+Route::get('/public/track/{token}', [DeliveryController::class, 'track']);
+Route::get('/deliveries/available', [DeliveryController::class, 'available']);
+Route::post('/driver/status', [DeliveryController::class, 'driverStatus']);
+Route::prefix('deliveries')->group(function () {
+    Route::get('', [DeliveryController::class, 'index']);
+    Route::post('', [DeliveryController::class, 'store']);
+    Route::get('/{id}', [DeliveryController::class, 'show']);
+    Route::post('/{id}/cancel', [DeliveryController::class, 'cancel']);
+    Route::post('/{id}/accept', [DeliveryController::class, 'accept']);
+    Route::post('/{id}/status', [DeliveryController::class, 'status']);
+    Route::post('/{id}/incidents', [DeliveryController::class, 'reportIncident']);
+    Route::get('/{id}/incidents', [DeliveryController::class, 'incidents']);
+});

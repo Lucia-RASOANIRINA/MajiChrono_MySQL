@@ -194,44 +194,6 @@ class _ProfileChoiceScreenState extends ConsumerState<ProfileChoiceScreen>
                               ),
                               const SizedBox(height: AppSpacing.md),
 
-                              // Note admin - sans orange
-                              Container(
-                                padding: const EdgeInsets.all(AppSpacing.sm),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(
-                                    alpha: 0.05,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: AppColors.primary.withValues(
-                                      alpha: 0.1,
-                                    ),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.info_outline,
-                                      size: 18,
-                                      color: AppColors.primary,
-                                    ),
-                                    const SizedBox(width: AppSpacing.sm),
-                                    Expanded(
-                                      child: Text(
-                                        l10n.authProfileAdminNote,
-                                        style: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                              color: AppColors.primary,
-                                              fontSize: 12,
-                                            ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              const SizedBox(height: AppSpacing.md),
 
                               // Champ Nom
                               TextField(

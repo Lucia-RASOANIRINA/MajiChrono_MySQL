@@ -13,7 +13,6 @@ use App\Support\SmsSender;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 use Throwable;
 
 /**
@@ -25,6 +24,7 @@ use Throwable;
 class AuthController extends Controller
 {
     private const PHONE_PATTERN = '/^\+261(32|33|34|37|38|39|20)\d{7}$/';
+
     private const EMAIL_PATTERN = '/^[^@\s]+@[^@\s.]+\.[^@\s]+$/';
 
     // --- Telephone -----------------------------------------------------
@@ -67,7 +67,11 @@ class AuthController extends Controller
                 'phone' => $challenge->destination,
                 'full_name' => '',
                 'password_hash' => '',
+                'phone_verified_at' => Carbon::now(),
             ]);
+        } else {
+            $account->phone_verified_at = Carbon::now();
+            $account->save();
         }
 
         return response()->json([
@@ -178,13 +182,244 @@ class AuthController extends Controller
         $account = Account::create([
             'email' => $email,
             'full_name' => '',
-            'password_hash' => '',
+            'password_hash' => $this->pendingPasswordHash($email),
+            'email_verified_at' => Carbon::now(),
         ]);
 
         return response()->json([
             'session' => $this->issueSession($account, deviceLabel: $request->header('X-Device')),
             'account' => $account->toMobileJson(),
         ]);
+    }
+
+    public function linkEmail(Request $request)
+    {
+        $account = CurrentAccount::resolve($request);
+        $email = mb_strtolower(trim((string) $request->input('email')));
+        if (! preg_match(self::EMAIL_PATTERN, $email)) {
+            throw ApiException::unprocessable('invalid_email', 'Adresse e-mail invalide');
+        }
+
+        $taken = Account::where('email', $email)->first();
+        if ($taken !== null && $taken->id !== $account->id) {
+            throw ApiException::conflict('email_already_linked', 'Cette adresse est deja rattachee a un autre compte');
+        }
+
+        $account->email = $email;
+        $account->email_verified_at = Carbon::now();
+        $account->save();
+
+        return response()->noContent();
+    }
+
+    public function signInWithPassword(Request $request)
+    {
+        $email = mb_strtolower(trim((string) $request->input('email')));
+        $password = (string) $request->input('password');
+        $account = Account::where('email', $email)->first();
+
+        if ($account === null || ! Security::verifySecret($account->password_hash, $password)) {
+            throw ApiException::unauthorized('E-mail ou mot de passe incorrect');
+        }
+
+        return response()->json([
+            'linked' => true,
+            'session' => $this->issueSession($account, deviceLabel: $request->header('X-Device')),
+            'account' => $account->toMobileJson(),
+        ]);
+    }
+
+    public function signUpWithPassword(Request $request)
+    {
+        $email = mb_strtolower(trim((string) $request->input('email')));
+        $password = (string) $request->input('password');
+        if (! preg_match(self::EMAIL_PATTERN, $email)) {
+            throw ApiException::unprocessable('invalid_email', 'Adresse e-mail invalide');
+        }
+        if (mb_strlen($password) < 8) {
+            throw ApiException::unprocessable('weak_password', 'Mot de passe trop court', [
+                'minLength' => 8,
+            ]);
+        }
+        if (Account::where('email', $email)->exists()) {
+            throw ApiException::conflict('email_taken', 'Cette adresse a deja un compte');
+        }
+
+        $challenge = Challenge::create([
+            'channel' => 'email',
+            'destination' => $email,
+            'code_hash' => Security::hashSecret($password),
+            'attempts_left' => 0,
+            'expires_at' => Carbon::now()->addHour(),
+            'consumed_at' => Carbon::now(),
+        ]);
+
+        return response()->json(['linked' => false, 'email' => $email]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $account = CurrentAccount::resolve($request);
+        $newPassword = (string) $request->input('newPassword');
+        if (mb_strlen($newPassword) < 8) {
+            throw ApiException::unprocessable('weak_password', 'Mot de passe trop court', [
+                'minLength' => 8,
+            ]);
+        }
+        if (filled($account->password_hash)
+            && ! Security::verifySecret($account->password_hash, (string) $request->input('currentPassword'))) {
+            throw ApiException::forbidden('wrong_current_password', 'Mot de passe actuel incorrect');
+        }
+
+        $account->password_hash = Security::hashSecret($newPassword);
+        $account->save();
+
+        return response()->noContent();
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $newPassword = (string) $request->input('newPassword');
+        if (mb_strlen($newPassword) < 8) {
+            throw ApiException::unprocessable('weak_password', 'Mot de passe trop court', [
+                'minLength' => 8,
+            ]);
+        }
+
+        $challenge = $this->consumeChallenge((string) $request->input('challengeId'), (string) $request->input('code'));
+        if ($challenge->channel !== 'email') {
+            throw ApiException::unprocessable('wrong_channel', 'Ce code ne vaut pas pour un mot de passe');
+        }
+
+        $account = Account::where('email', $challenge->destination)->first();
+        if ($account !== null) {
+            $account->password_hash = Security::hashSecret($newPassword);
+            $account->save();
+        }
+
+        return response()->noContent();
+    }
+
+    public function requestEmailChange(Request $request)
+    {
+        $account = CurrentAccount::resolve($request);
+        $email = mb_strtolower(trim((string) $request->input('email')));
+        if (! preg_match(self::EMAIL_PATTERN, $email)) {
+            throw ApiException::unprocessable('invalid_email', 'Adresse e-mail invalide');
+        }
+        $taken = Account::where('email', $email)->first();
+        if ($taken !== null && $taken->id !== $account->id) {
+            throw ApiException::conflict('email_taken', 'Cette adresse est deja rattachee a un autre compte');
+        }
+
+        [$challenge, $code] = $this->openChallenge('email', $email);
+        try {
+            MailSender::sendLoginCode($email, $code);
+        } catch (Throwable $e) {
+            $challenge->consumed_at = Carbon::now();
+            $challenge->save();
+            throw ApiException::badGateway('mail_delivery_failed', 'Impossible d\'envoyer le code pour le moment');
+        }
+
+        return response()->json($this->challengeResponse($challenge, $code, email: $email));
+    }
+
+    public function verifyEmailChange(Request $request)
+    {
+        $account = CurrentAccount::resolve($request);
+        $challenge = $this->consumeChallenge((string) $request->input('challengeId'), (string) $request->input('code'));
+        if ($challenge->channel !== 'email') {
+            throw ApiException::unprocessable('wrong_channel', 'Ce code ne vaut pas pour un e-mail');
+        }
+        $taken = Account::where('email', $challenge->destination)->first();
+        if ($taken !== null && $taken->id !== $account->id) {
+            throw ApiException::conflict('email_taken', 'Cette adresse est deja rattachee a un autre compte');
+        }
+        $account->email = $challenge->destination;
+        $account->email_verified_at = Carbon::now();
+        $account->save();
+
+        return response()->json($account->toMobileJson());
+    }
+
+    public function requestPhoneChange(Request $request)
+    {
+        $account = CurrentAccount::resolve($request);
+        $phone = (string) $request->input('phone');
+        if (! preg_match(self::PHONE_PATTERN, $phone)) {
+            throw ApiException::unprocessable('invalid_phone', 'Numero de telephone malgache invalide');
+        }
+        $taken = Account::where('phone', $phone)->first();
+        if ($taken !== null && $taken->id !== $account->id) {
+            throw ApiException::conflict('phone_taken', 'Ce numero est deja utilise par un autre compte');
+        }
+
+        [$challenge, $code] = $this->openChallenge('sms', $phone);
+        try {
+            SmsSender::sendLoginCode($phone, $code);
+        } catch (Throwable $e) {
+            $challenge->consumed_at = Carbon::now();
+            $challenge->save();
+            throw ApiException::badGateway('sms_delivery_failed', 'Impossible d\'envoyer le SMS pour le moment');
+        }
+
+        return response()->json($this->challengeResponse($challenge, $code));
+    }
+
+    public function verifyPhoneChange(Request $request)
+    {
+        $account = CurrentAccount::resolve($request);
+        $challenge = $this->consumeChallenge((string) $request->input('challengeId'), (string) $request->input('code'));
+        if ($challenge->channel !== 'sms') {
+            throw ApiException::unprocessable('wrong_channel', 'Ce code ne vaut pas pour un numero');
+        }
+        $taken = Account::where('phone', $challenge->destination)->first();
+        if ($taken !== null && $taken->id !== $account->id) {
+            throw ApiException::conflict('phone_taken', 'Ce numero est deja utilise par un autre compte');
+        }
+        $account->phone = $challenge->destination;
+        $account->phone_verified_at = Carbon::now();
+        $account->save();
+
+        return response()->json($account->toMobileJson());
+    }
+
+    public function sessions(Request $request)
+    {
+        $account = CurrentAccount::resolve($request);
+        $claims = Security::readAccessToken(trim(substr((string) $request->header('Authorization'), 7)));
+        $currentFamily = $claims['fam'] ?? null;
+        $tokens = RefreshToken::where('account_id', $account->id)
+            ->whereNull('revoked_at')
+            ->where('expires_at', '>', Carbon::now())
+            ->orderBy('created_at')
+            ->get()
+            ->groupBy('family');
+
+        return response()->json($tokens->map(function ($familyTokens, $family) use ($currentFamily) {
+            $token = $familyTokens->first();
+
+            return [
+                'id' => $family,
+                'deviceLabel' => $token->device_label,
+                'createdAt' => $token->created_at->toIso8601String(),
+                'current' => $family === $currentFamily,
+            ];
+        })->values());
+    }
+
+    public function revokeSession(Request $request, string $family)
+    {
+        $account = CurrentAccount::resolve($request);
+        $tokens = RefreshToken::where('account_id', $account->id)->where('family', $family)->get();
+        if ($tokens->isEmpty()) {
+            throw ApiException::notFound('Session inconnue');
+        }
+        RefreshToken::where('account_id', $account->id)->where('family', $family)->update([
+            'revoked_at' => Carbon::now(),
+        ]);
+
+        return response()->noContent();
     }
 
     // --- Sessions ----------------------------------------------------------
@@ -247,6 +482,18 @@ class AuthController extends Controller
         return [$challenge, $code];
     }
 
+    private function pendingPasswordHash(string $email): string
+    {
+        return (string) (Challenge::query()
+            ->where('channel', 'email')
+            ->where('destination', $email)
+            ->where('attempts_left', 0)
+            ->whereNotNull('consumed_at')
+            ->where('expires_at', '>', Carbon::now())
+            ->latest('created_at')
+            ->value('code_hash') ?? '');
+    }
+
     private function consumeChallenge(string $challengeId, string $code): Challenge
     {
         $challenge = Challenge::find($challengeId);
@@ -279,6 +526,11 @@ class AuthController extends Controller
             // registerWithEmail (nouveau compte) ou de rattacher un numero
             // existant.
             return ['linked' => false, 'email' => $email];
+        }
+
+        if ($account->email_verified_at === null) {
+            $account->email_verified_at = Carbon::now();
+            $account->save();
         }
 
         return [

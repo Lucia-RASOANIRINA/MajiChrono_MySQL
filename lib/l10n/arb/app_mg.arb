@@ -257,6 +257,10 @@
   "@authEmailUnlinkedBody": { "placeholders": { "email": { "type": "String" } } },
   "authEmailRegisterAction": "Mamorona kaonty amin'ity mailaka ity",
   "authEmailUnlinkedAction": "Hanohy amin'ny laharako",
+  "authEmailCreatedTitle": "Vita soa aman-tsara ny kaontinao",
+  "authEmailCreatedBody": "Voamarina ny adiresy mailakao. Afaka manampy laharan-telefaonina ianao izao na manohy tsy misy laharana.",
+  "authEmailAddPhoneAction": "Hanampy laharan-telefaonina",
+  "authEmailContinueAction": "Tohizo",
   "authEmailLinked": "Voarohy amin'ny kaontinao ny adiresy",
 
   "authProfileTitle": "Ny andraikitrao",

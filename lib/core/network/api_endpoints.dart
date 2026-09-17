@@ -72,6 +72,7 @@ class ApiEndpoints {
 
   // --- Livreur ---------------------------------------------------------
   static const String deliveriesAvailable = '/deliveries/available';
+  static const String driverStatus = '/driver/status';
   static String deliveryAccept(String id) => '/deliveries/$id/accept';
   static String deliveryStatus(String id) => '/deliveries/$id/status';
 
