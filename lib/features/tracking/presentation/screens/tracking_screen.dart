@@ -195,7 +195,6 @@ class TrackingScreen extends ConsumerWidget {
           ],
           if (delivery.trackingToken != null) ...[
             _ShareTrackingCard(
-              token: delivery.trackingToken!,
               code: delivery.trackingCode,
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -495,18 +494,20 @@ class _DriverCard extends StatelessWidget {
 
 /// Partage du lien de suivi public (EXI-C24, differenciant D9).
 class _ShareTrackingCard extends StatelessWidget {
-  const _ShareTrackingCard({required this.token, this.code});
+  const _ShareTrackingCard({this.code});
 
-  final String token;
   final String? code;
 
-  static const String publicHost = 'https://suivi.majichrono.mg';
+  static const String publicTrackingPage =
+      'https://majichrono.majitech.mg/track';
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final url = '$publicHost/$token';
+    final url = code == null
+        ? publicTrackingPage
+        : '$publicTrackingPage?code=${Uri.encodeQueryComponent(code!)}';
 
     return McCard(
       padding: EdgeInsets.zero,
