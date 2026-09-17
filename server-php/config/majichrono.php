@@ -15,4 +15,10 @@ return [
 
     'mail_from_address' => env('MAIL_FROM_ADDRESS', 'no-reply@majichrono.mg'),
     'mail_from_name' => env('MAIL_FROM_NAME', 'MajiChrono'),
+
+    'max_file_size' => (int) env('MAX_FILE_SIZE', 5 * 1024 * 1024),
+    'allowed_extensions' => array_filter(array_map(
+        'trim',
+        explode(',', env('ALLOWED_EXTENSIONS', 'jpg,jpeg,png,pdf,webp'))
+    )),
 ];
