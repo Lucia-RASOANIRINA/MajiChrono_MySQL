@@ -225,6 +225,35 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
+                          Container(
+                            margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                            padding: const EdgeInsets.all(AppSpacing.sm),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.amber.shade300),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.sms_failed_outlined,
+                                  color: Colors.amber.shade900,
+                                ),
+                                const SizedBox(width: AppSpacing.sm),
+                                Expanded(
+                                  child: Text(
+                                    l10n.authSmsUnavailableMessage,
+                                    style: TextStyle(
+                                      color: Colors.amber.shade900,
+                                      fontSize: 13,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                           const SizedBox(height: AppSpacing.md),
                           // Sélecteur de langue
                           Align(

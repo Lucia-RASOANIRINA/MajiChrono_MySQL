@@ -636,6 +636,16 @@ class AppLocalizationsMg extends AppLocalizations {
       'Google, Facebook, Twitter na teny miafina.';
 
   @override
+  String get authSmsUnavailableTitle => 'Tsy mbola azo ampiasaina ny SMS';
+
+  @override
+  String get authSmsUnavailableMessage =>
+      'Tsy mbola azo alefa ny SMS. Manorata amin\'ny adiresy mailaka : halefa amin\'ny mailaka ny kaody fanamarinana.';
+
+  @override
+  String get authSmsUnavailableAction => 'Hisoratra amin\'ny mailaka';
+
+  @override
   String get authSignInTitle => 'Fidirana amin\'ny kaontinao';
 
   @override

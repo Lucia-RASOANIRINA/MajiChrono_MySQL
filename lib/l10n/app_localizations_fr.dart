@@ -634,6 +634,16 @@ class AppLocalizationsFr extends AppLocalizations {
       'Google, Facebook, Twitter ou mot de passe.';
 
   @override
+  String get authSmsUnavailableTitle => 'Verification par SMS indisponible';
+
+  @override
+  String get authSmsUnavailableMessage =>
+      'L\'envoi de SMS n\'est pas encore disponible. Inscrivez-vous avec votre adresse e-mail : le code de verification vous sera envoye par e-mail.';
+
+  @override
+  String get authSmsUnavailableAction => 'S\'inscrire avec mon e-mail';
+
+  @override
   String get authSignInTitle => 'Connexion a votre compte';
 
   @override

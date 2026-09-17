@@ -1262,6 +1262,24 @@ abstract class AppLocalizations {
   /// **'Google, Facebook, Twitter ou mot de passe.'**
   String get authChoiceEmailNote;
 
+  /// No description provided for @authSmsUnavailableTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Verification par SMS indisponible'**
+  String get authSmsUnavailableTitle;
+
+  /// No description provided for @authSmsUnavailableMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'envoi de SMS n\'est pas encore disponible. Inscrivez-vous avec votre adresse e-mail : le code de verification vous sera envoye par e-mail.'**
+  String get authSmsUnavailableMessage;
+
+  /// No description provided for @authSmsUnavailableAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'S\'inscrire avec mon e-mail'**
+  String get authSmsUnavailableAction;
+
   /// No description provided for @authSignInTitle.
   ///
   /// In fr, this message translates to:
