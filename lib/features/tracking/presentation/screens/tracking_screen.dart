@@ -194,7 +194,10 @@ class TrackingScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.lg),
           ],
           if (delivery.trackingToken != null) ...[
-            _ShareTrackingCard(token: delivery.trackingToken!),
+            _ShareTrackingCard(
+              token: delivery.trackingToken!,
+              code: delivery.trackingCode,
+            ),
             const SizedBox(height: AppSpacing.lg),
           ],
           // Une course remise se note : c'est le moment ou l'expediteur a tout
@@ -492,9 +495,10 @@ class _DriverCard extends StatelessWidget {
 
 /// Partage du lien de suivi public (EXI-C24, differenciant D9).
 class _ShareTrackingCard extends StatelessWidget {
-  const _ShareTrackingCard({required this.token});
+  const _ShareTrackingCard({required this.token, this.code});
 
   final String token;
+  final String? code;
 
   static const String publicHost = 'https://suivi.majichrono.mg';
 
@@ -509,13 +513,26 @@ class _ShareTrackingCard extends StatelessWidget {
       child: ListTile(
         leading: const Icon(Icons.share_outlined),
         title: Text(l10n.trackingShare),
-        subtitle: Text(
-          url,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (code != null)
+              Text(
+                code!,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            Text(
+              url,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
         trailing: const Icon(Icons.copy_outlined),
         // Le destinataire n'installe rien : il recoit un lien par SMS et suit

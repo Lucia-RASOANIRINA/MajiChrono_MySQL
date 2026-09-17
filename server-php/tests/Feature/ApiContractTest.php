@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Delivery;
 use App\Support\Security;
 use Tests\TestCase;
 
@@ -35,6 +36,14 @@ class ApiContractTest extends TestCase
         $this->getJson('/health')
             ->assertOk()
             ->assertJson(['status' => 'ok']);
+    }
+
+    public function test_delivery_public_tracking_code_uses_the_site_format(): void
+    {
+        $delivery = new Delivery;
+        $delivery->id = 123;
+
+        $this->assertSame('MC-0000-3F', $delivery->publicTrackingCode());
     }
 
     public function test_client_delivery_endpoints_require_authentication(): void

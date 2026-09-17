@@ -311,7 +311,18 @@ class DeliveryController extends Controller
 
     public function track(string $token)
     {
+        $normalized = strtoupper(trim($token));
         $delivery = Delivery::where('tracking_token', $token)->first();
+
+        if ($delivery === null && preg_match('/^MC-[A-Z0-9]{4}-[A-Z0-9]{2}$/', $normalized) === 1) {
+            $code = str_replace('-', '', substr($normalized, 3));
+            $id = base_convert($code, 36, 10);
+            $delivery = ctype_digit($id) ? Delivery::find($id) : null;
+            if ($delivery !== null && $delivery->publicTrackingCode() !== $normalized) {
+                $delivery = null;
+            }
+        }
+
         if ($delivery === null) {
             throw ApiException::notFound('Lien de suivi inconnu');
         }

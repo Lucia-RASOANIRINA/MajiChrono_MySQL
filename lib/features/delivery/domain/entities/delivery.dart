@@ -222,6 +222,7 @@ class Delivery {
     this.driverId,
     this.driverName,
     this.trackingToken,
+    this.trackingCode,
     this.pendingSync = false,
     this.payer = Payer.sender,
     this.shopping,
@@ -244,6 +245,7 @@ class Delivery {
 
   /// Jeton du lien de suivi public partageable par SMS (EXI-C24, D9).
   final String? trackingToken;
+  final String? trackingCode;
 
   /// Vrai tant que la course n'a pas ete confirmee par le serveur (EXI-C13).
   ///
@@ -309,6 +311,7 @@ class Delivery {
     if (driverId != null) 'driverId': driverId,
     if (driverName != null) 'driverName': driverName,
     if (trackingToken != null) 'trackingToken': trackingToken,
+    if (trackingCode != null) 'trackingCode': trackingCode,
     'payer': payer.wireName,
     if (shopping != null) 'shopping': shopping!.toJson(),
     if (relayPointId != null) 'relayPointId': relayPointId,
@@ -338,6 +341,7 @@ class Delivery {
       driverId: json['driverId'] as String?,
       driverName: json['driverName'] as String?,
       trackingToken: json['trackingToken'] as String?,
+      trackingCode: json['trackingCode'] as String?,
       payer: Payer.fromWire(json['payer'] as String?),
       shopping: ShoppingOrder.fromJson(
         json['shopping'] as Map<String, dynamic>?,

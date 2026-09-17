@@ -52,6 +52,18 @@ class Delivery extends Model
         return is_array($value) ? $value : ['summary' => $fallback];
     }
 
+    public function publicTrackingCode(): ?string
+    {
+        if (! is_numeric($this->id)) {
+            return null;
+        }
+
+        $encoded = strtoupper(base_convert((string) $this->id, 10, 36));
+        $code = str_pad(substr($encoded, -6), 6, '0', STR_PAD_LEFT);
+
+        return 'MC-'.substr($code, 0, 4).'-'.substr($code, 4);
+    }
+
     public function jsonPayload(): array
     {
         $status = [
@@ -85,6 +97,7 @@ class Delivery extends Model
             'payer' => $this->payer,
             'shopping' => $this->shopping_json ? json_decode($this->shopping_json, true) : null,
             'trackingToken' => $this->tracking_token,
+            'trackingCode' => $this->publicTrackingCode(),
             'createdAt' => optional($this->created_at)->toIso8601String(),
             'updatedAt' => optional($this->updated_at)->toIso8601String(),
         ];
