@@ -134,4 +134,15 @@ class ApiContractTest extends TestCase
         $this->postJson('/reviews', ['deliveryId' => 1, 'stars' => 5])->assertStatus(401);
         $this->getJson('/reviews/delivery/1')->assertStatus(401);
     }
+
+    public function test_support_routes_require_authentication(): void
+    {
+        $this->getJson('/notifications')->assertStatus(401);
+        $this->postJson('/notifications/1/read')->assertStatus(401);
+        $this->postJson('/contact', ['subject' => 'Aide', 'message' => 'Bonjour'])->assertStatus(401);
+        $this->getJson('/admin/contact')->assertStatus(401);
+        $this->postJson('/admin/contact/1/reply', ['reply' => 'Réponse'])->assertStatus(401);
+        $this->getJson('/disputes/1/files')->assertStatus(401);
+        $this->postJson('/disputes/1/files', [])->assertStatus(401);
+    }
 }

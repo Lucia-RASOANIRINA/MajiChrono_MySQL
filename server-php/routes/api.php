@@ -9,6 +9,7 @@ use App\Http\Controllers\KycController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\SupportController;
 use Illuminate\Support\Facades\Route;
 
 // Memes chemins que server/app/routers/auth.py (et ApiEndpoints.dart cote
@@ -61,6 +62,13 @@ Route::post('/drivers/kyc', [KycController::class, 'submit']);
 Route::get('/accounts/{accountId}/kyc/{kind}', [KycController::class, 'read']);
 Route::post('/reviews', [ReviewController::class, 'store']);
 Route::get('/reviews/delivery/{deliveryId}', [ReviewController::class, 'show']);
+Route::get('/notifications', [SupportController::class, 'notifications']);
+Route::post('/notifications/{notificationId}/read', [SupportController::class, 'markNotificationRead']);
+Route::post('/contact', [SupportController::class, 'contact']);
+Route::get('/admin/contact', [SupportController::class, 'adminContacts']);
+Route::post('/admin/contact/{messageId}/reply', [SupportController::class, 'replyContact']);
+Route::get('/disputes/{disputeId}/files', [SupportController::class, 'files']);
+Route::post('/disputes/{disputeId}/files', [SupportController::class, 'addFile']);
 Route::get('/disputes', [DisputeController::class, 'index']);
 Route::post('/disputes', [DisputeController::class, 'store']);
 Route::get('/disputes/{disputeId}', [DisputeController::class, 'show']);
