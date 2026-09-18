@@ -120,4 +120,12 @@ class ApiContractTest extends TestCase
         $this->postJson('/kyc/1/messages', ['body' => 'Bonjour'])->assertStatus(401);
         $this->postJson('/kyc/1/review', ['approve' => true, 'reason' => 'Valide'])->assertStatus(401);
     }
+
+    public function test_chat_routes_require_authentication(): void
+    {
+        $this->getJson('/conversations')->assertStatus(401);
+        $this->getJson('/deliveries/1/messages')->assertStatus(401);
+        $this->postJson('/deliveries/1/messages', ['body' => 'Bonjour'])->assertStatus(401);
+        $this->postJson('/deliveries/1/messages/read')->assertStatus(401);
+    }
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\KycController;
 use App\Http\Controllers\MeController;
@@ -56,6 +57,10 @@ Route::post('/drivers/kyc/documents/{kind}', [KycController::class, 'upload']);
 Route::delete('/drivers/kyc/documents/{kind}', [KycController::class, 'delete']);
 Route::post('/drivers/kyc', [KycController::class, 'submit']);
 Route::get('/accounts/{accountId}/kyc/{kind}', [KycController::class, 'read']);
+Route::get('/conversations', [ChatController::class, 'conversations']);
+Route::get('/deliveries/{deliveryId}/messages', [ChatController::class, 'messages']);
+Route::post('/deliveries/{deliveryId}/messages', [ChatController::class, 'send']);
+Route::post('/deliveries/{deliveryId}/messages/read', [ChatController::class, 'markRead']);
 Route::get('/kyc', [KycController::class, 'queue']);
 Route::get('/kyc/{driverId}/documents', [KycController::class, 'adminDocuments']);
 Route::get('/kyc/{driverId}/messages', [KycController::class, 'adminMessages']);
