@@ -145,4 +145,29 @@ class ApiContractTest extends TestCase
         $this->getJson('/disputes/1/files')->assertStatus(401);
         $this->postJson('/disputes/1/files', [])->assertStatus(401);
     }
+
+    public function test_payment_routes_require_authentication(): void
+    {
+        $this->getJson('/payments/balance')->assertStatus(401);
+        $this->getJson('/payments/history')->assertStatus(401);
+        $this->postJson('/payments/intent', [])->assertStatus(401);
+        $this->getJson('/payments/1')->assertStatus(401);
+        $this->postJson('/payments/1/claim', [])->assertStatus(401);
+        $this->postJson('/payments/1/confirm', [])->assertStatus(401);
+        $this->postJson('/payments/1/cash')->assertStatus(401);
+        $this->postJson('/payments/withdraw', [])->assertStatus(401);
+    }
+
+    public function test_general_admin_routes_require_authentication(): void
+    {
+        $this->getJson('/admin/dashboard')->assertStatus(401);
+        $this->getJson('/admin/fleet')->assertStatus(401);
+        $this->getJson('/admin/users')->assertStatus(401);
+        $this->postJson('/admin/drivers/1/suspension', [])->assertStatus(401);
+        $this->postJson('/admin/users/1/suspension', [])->assertStatus(401);
+        $this->getJson('/admin/moderation')->assertStatus(401);
+        $this->getJson('/admin/system/audit')->assertStatus(401);
+        $this->getJson('/admin/settings')->assertStatus(401);
+        $this->putJson('/admin/settings/key', ['value' => 'value'])->assertStatus(401);
+    }
 }

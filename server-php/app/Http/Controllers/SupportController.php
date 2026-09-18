@@ -7,6 +7,7 @@ use App\Models\ContactMessage;
 use App\Models\Dispute;
 use App\Models\Notification;
 use App\Models\ReclamationFile;
+use App\Models\Setting;
 use App\Support\CurrentAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -169,6 +170,56 @@ class SupportController extends Controller
         ]);
 
         return response()->json(['id' => $file->id, 'reclamationId' => (int) $disputeId], 201);
+    }
+
+    public function audit(Request $request)
+    {
+        $this->requireAdmin($request);
+        $tables = [
+            'apiTokens' => 'api_tokens',
+            'loginAttempts' => 'login_attempts',
+            'passwordResets' => 'password_resets',
+            'settings' => 'settings',
+            'notifications' => 'notifications',
+            'contactMessages' => 'contact_messages',
+            'reclamationFiles' => 'reclamation_files',
+        ];
+        $counts = [];
+        foreach ($tables as $key => $table) {
+            $counts[$key] = DB::table($table)->count();
+        }
+
+        return response()->json($counts);
+    }
+
+    public function settings(Request $request)
+    {
+        $this->requireAdmin($request);
+
+        return response()->json([
+            'items' => Setting::orderBy('key_name')->get()->map(fn (Setting $setting): array => [
+                'key' => $setting->key_name,
+                'value' => $setting->value,
+                'updatedAt' => optional($setting->updated_at)->toIso8601String(),
+            ])->all(),
+        ]);
+    }
+
+    public function updateSetting(Request $request, string $key)
+    {
+        $this->requireAdmin($request);
+        $value = $request->input('value');
+        if ($value !== null && mb_strlen((string) $value) > 10000) {
+            throw ApiException::unprocessable('invalid_value', 'Valeur trop longue');
+        }
+        $setting = Setting::find($key);
+        if ($setting === null) {
+            $setting = Setting::create(['key_name' => $key, 'value' => $value, 'updated_at' => Carbon::now()]);
+        } else {
+            $setting->forceFill(['value' => $value, 'updated_at' => Carbon::now()])->save();
+        }
+
+        return response()->json(['key' => $setting->key_name, 'value' => $setting->value]);
     }
 
     private function requireAdmin(Request $request)

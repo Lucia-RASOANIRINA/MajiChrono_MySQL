@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AddressController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DeliveryController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\DisputeController;
 use App\Http\Controllers\KycController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SupportController;
 use Illuminate\Support\Facades\Route;
@@ -67,8 +69,27 @@ Route::post('/notifications/{notificationId}/read', [SupportController::class, '
 Route::post('/contact', [SupportController::class, 'contact']);
 Route::get('/admin/contact', [SupportController::class, 'adminContacts']);
 Route::post('/admin/contact/{messageId}/reply', [SupportController::class, 'replyContact']);
+Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
+Route::get('/admin/fleet', [AdminController::class, 'fleet']);
+Route::get('/admin/users', [AdminController::class, 'users']);
+Route::post('/admin/drivers/{driverId}/suspension', [AdminController::class, 'suspendDriver']);
+Route::post('/admin/users/{accountId}/suspension', [AdminController::class, 'suspendUser']);
+Route::get('/admin/moderation', [AdminController::class, 'moderation']);
+Route::get('/admin/system/audit', [SupportController::class, 'audit']);
+Route::get('/admin/settings', [SupportController::class, 'settings']);
+Route::put('/admin/settings/{key}', [SupportController::class, 'updateSetting']);
 Route::get('/disputes/{disputeId}/files', [SupportController::class, 'files']);
 Route::post('/disputes/{disputeId}/files', [SupportController::class, 'addFile']);
+Route::prefix('payments')->group(function () {
+    Route::get('/balance', [PaymentController::class, 'balance']);
+    Route::get('/history', [PaymentController::class, 'history']);
+    Route::post('/intent', [PaymentController::class, 'createIntent']);
+    Route::get('/{paymentId}', [PaymentController::class, 'show']);
+    Route::post('/{paymentId}/claim', [PaymentController::class, 'claim']);
+    Route::post('/{paymentId}/confirm', [PaymentController::class, 'confirm']);
+    Route::post('/{paymentId}/cash', [PaymentController::class, 'cash']);
+    Route::post('/withdraw', [PaymentController::class, 'withdraw']);
+});
 Route::get('/disputes', [DisputeController::class, 'index']);
 Route::post('/disputes', [DisputeController::class, 'store']);
 Route::get('/disputes/{disputeId}', [DisputeController::class, 'show']);
