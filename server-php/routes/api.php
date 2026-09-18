@@ -7,6 +7,7 @@ use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\KycController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
 
 // Memes chemins que server/app/routers/auth.py (et ApiEndpoints.dart cote
@@ -57,6 +58,8 @@ Route::post('/drivers/kyc/documents/{kind}', [KycController::class, 'upload']);
 Route::delete('/drivers/kyc/documents/{kind}', [KycController::class, 'delete']);
 Route::post('/drivers/kyc', [KycController::class, 'submit']);
 Route::get('/accounts/{accountId}/kyc/{kind}', [KycController::class, 'read']);
+Route::post('/reviews', [ReviewController::class, 'store']);
+Route::get('/reviews/delivery/{deliveryId}', [ReviewController::class, 'show']);
 Route::get('/conversations', [ChatController::class, 'conversations']);
 Route::get('/deliveries/{deliveryId}/messages', [ChatController::class, 'messages']);
 Route::post('/deliveries/{deliveryId}/messages', [ChatController::class, 'send']);
