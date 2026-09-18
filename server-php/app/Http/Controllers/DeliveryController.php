@@ -7,6 +7,7 @@ use App\Models\Delivery;
 use App\Models\DeliveryEvent;
 use App\Models\DeliveryIncident;
 use App\Models\DriverState;
+use App\Models\DriverVehicle;
 use App\Models\PositionSample;
 use App\Support\CurrentAccount;
 use Illuminate\Http\Request;
@@ -58,6 +59,43 @@ class DeliveryController extends Controller
             'lng' => $state->lng,
             'fixedAt' => optional($state->fixed_at)->toIso8601String(),
         ]);
+    }
+
+    public function vehicle(Request $request)
+    {
+        $account = CurrentAccount::resolve($request);
+        $this->requireDriver($account);
+        $vehicle = DriverVehicle::find($account->id);
+
+        return response()->json($vehicle?->jsonPayload() ?? [
+            'type' => null,
+            'validation' => 'pending',
+        ]);
+    }
+
+    public function updateVehicle(Request $request)
+    {
+        $account = CurrentAccount::resolve($request);
+        $this->requireDriver($account);
+        $type = trim((string) $request->input('type', 'moto'));
+        if (! in_array($type, ['moto', 'scooter', 'voiture', 'velo'], true)) {
+            throw ApiException::unprocessable('invalid_type', 'Type de vehicule inconnu');
+        }
+
+        $vehicle = DriverVehicle::updateOrCreate(
+            ['account_id' => $account->id],
+            [
+                'vehicle_type' => $type,
+                'brand' => trim((string) $request->input('brand')) ?: null,
+                'model' => trim((string) $request->input('model')) ?: null,
+                'plate' => trim((string) $request->input('plate')) ?: null,
+                'insurance_expiry' => trim((string) $request->input('insuranceExpiry')) ?: null,
+                'validation' => 'pending',
+                'updated_at' => Carbon::now(),
+            ],
+        );
+
+        return response()->json($vehicle->jsonPayload());
     }
 
     public function trackingBatch(Request $request)
