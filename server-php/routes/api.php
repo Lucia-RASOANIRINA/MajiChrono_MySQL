@@ -3,6 +3,7 @@
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DeliveryController;
+use App\Http\Controllers\KycController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\MediaController;
 use Illuminate\Support\Facades\Route;
@@ -48,6 +49,18 @@ Route::prefix('addresses')->group(function () {
 
 Route::post('/media', [MediaController::class, 'store']);
 Route::get('/media/{mediaId}', [MediaController::class, 'show']);
+Route::get('/drivers/kyc/status', [KycController::class, 'status']);
+Route::get('/drivers/kyc/messages', [KycController::class, 'messages']);
+Route::post('/drivers/kyc/messages', [KycController::class, 'sendMessage']);
+Route::post('/drivers/kyc/documents/{kind}', [KycController::class, 'upload']);
+Route::delete('/drivers/kyc/documents/{kind}', [KycController::class, 'delete']);
+Route::post('/drivers/kyc', [KycController::class, 'submit']);
+Route::get('/accounts/{accountId}/kyc/{kind}', [KycController::class, 'read']);
+Route::get('/kyc', [KycController::class, 'queue']);
+Route::get('/kyc/{driverId}/documents', [KycController::class, 'adminDocuments']);
+Route::get('/kyc/{driverId}/messages', [KycController::class, 'adminMessages']);
+Route::post('/kyc/{driverId}/messages', [KycController::class, 'adminSendMessage']);
+Route::post('/kyc/{driverId}/review', [KycController::class, 'review']);
 Route::get('/relay-points', [DeliveryController::class, 'relayPoints']);
 Route::get('/track/{token}', [DeliveryController::class, 'track']);
 Route::get('/public/track/{token}', [DeliveryController::class, 'track']);

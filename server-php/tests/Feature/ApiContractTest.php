@@ -100,4 +100,24 @@ class ApiContractTest extends TestCase
         $this->patchJson('/driver/vehicle', ['type' => 'moto'])->assertStatus(401);
         $this->getJson('/relay-points')->assertStatus(401);
     }
+
+    public function test_driver_kyc_routes_require_authentication(): void
+    {
+        $this->getJson('/drivers/kyc/status')->assertStatus(401);
+        $this->getJson('/drivers/kyc/messages')->assertStatus(401);
+        $this->postJson('/drivers/kyc/messages', ['body' => 'Bonjour'])->assertStatus(401);
+        $this->postJson('/drivers/kyc/documents/cin_front', [])->assertStatus(401);
+        $this->deleteJson('/drivers/kyc/documents/cin_front')->assertStatus(401);
+        $this->postJson('/drivers/kyc')->assertStatus(401);
+        $this->getJson('/accounts/1/kyc/cin_front')->assertStatus(401);
+    }
+
+    public function test_admin_kyc_routes_require_authentication(): void
+    {
+        $this->getJson('/kyc')->assertStatus(401);
+        $this->getJson('/kyc/1/documents')->assertStatus(401);
+        $this->getJson('/kyc/1/messages')->assertStatus(401);
+        $this->postJson('/kyc/1/messages', ['body' => 'Bonjour'])->assertStatus(401);
+        $this->postJson('/kyc/1/review', ['approve' => true, 'reason' => 'Valide'])->assertStatus(401);
+    }
 }
