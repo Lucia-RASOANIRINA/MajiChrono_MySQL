@@ -34,6 +34,30 @@ class DeliveryController extends Controller
         'awaiting_confirmation' => ['delivered', 'failed'],
     ];
 
+    private const RELAY_POINTS = [
+        [
+            'id' => 'rel_1', 'name' => 'Epicerie Tsiky', 'district' => 'Ambohipo',
+            'landmark' => 'Portail vert, apres le pont',
+            'point' => ['lat' => -18.9105, 'lng' => 47.5570],
+            'openingHours' => 'Lun-Sam 7h-19h', 'phone' => '+261340000011',
+            'acceptsDropoff' => true, 'acceptsPickup' => true, 'maxWeightKg' => 15.0, 'storageDays' => 3,
+        ],
+        [
+            'id' => 'rel_2', 'name' => 'Quincaillerie Rary', 'district' => 'Analakely',
+            'landmark' => 'Face a l escalier, boutique bleue',
+            'point' => ['lat' => -18.9080, 'lng' => 47.5250],
+            'openingHours' => 'Lun-Ven 8h-18h', 'phone' => '+261320000022',
+            'acceptsDropoff' => true, 'acceptsPickup' => true, 'maxWeightKg' => 30.0, 'storageDays' => 5,
+        ],
+        [
+            'id' => 'rel_3', 'name' => 'Kiosque Ivandry', 'district' => 'Ivandry',
+            'landmark' => 'Derriere la station, mur blanc',
+            'point' => ['lat' => -18.8760, 'lng' => 47.5310],
+            'openingHours' => 'Tous les jours 6h-20h', 'phone' => '+261320000033',
+            'acceptsDropoff' => false, 'acceptsPickup' => true, 'maxWeightKg' => 5.0, 'storageDays' => 2,
+        ],
+    ];
+
     public function driverStatus(Request $request)
     {
         $account = CurrentAccount::resolve($request);
@@ -59,6 +83,33 @@ class DeliveryController extends Controller
             'lng' => $state->lng,
             'fixedAt' => optional($state->fixed_at)->toIso8601String(),
         ]);
+    }
+
+    public function relayPoints(Request $request)
+    {
+        CurrentAccount::resolve($request);
+        $district = $request->query('district');
+        $lat = is_numeric($request->query('lat')) ? (float) $request->query('lat') : null;
+        $lng = is_numeric($request->query('lng')) ? (float) $request->query('lng') : null;
+        $items = array_values(array_filter(
+            self::RELAY_POINTS,
+            fn (array $point): bool => $district === null || $point['district'] === $district,
+        ));
+
+        if ($lat !== null && $lng !== null) {
+            foreach ($items as &$item) {
+                $item['distanceKm'] = round($this->distanceKm(
+                    $lat,
+                    $lng,
+                    $item['point']['lat'],
+                    $item['point']['lng'],
+                ), 2);
+            }
+            unset($item);
+            usort($items, fn (array $a, array $b): int => $a['distanceKm'] <=> $b['distanceKm']);
+        }
+
+        return response()->json(['items' => $items]);
     }
 
     public function vehicle(Request $request)

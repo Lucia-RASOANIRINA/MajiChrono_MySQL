@@ -48,7 +48,7 @@ Route::prefix('addresses')->group(function () {
 
 Route::post('/media', [MediaController::class, 'store']);
 Route::get('/media/{mediaId}', [MediaController::class, 'show']);
-
+Route::get('/relay-points', [DeliveryController::class, 'relayPoints']);
 Route::get('/track/{token}', [DeliveryController::class, 'track']);
 Route::get('/public/track/{token}', [DeliveryController::class, 'track']);
 Route::get('/deliveries/available', [DeliveryController::class, 'available']);
