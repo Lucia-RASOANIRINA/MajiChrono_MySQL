@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:majichrono/app/router/app_routes.dart';
 import 'package:majichrono/app/theme/app_colors.dart';
 import 'package:majichrono/app/theme/design_tokens.dart';
+import 'package:majichrono/features/auth/presentation/widgets/auth_branding.dart';
 import 'package:majichrono/l10n/app_localizations.dart';
 import 'package:majichrono/shared/widgets/mc_patterns.dart';
 
@@ -27,13 +28,13 @@ class AuthChoiceScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: authBrandColor(context),
       body: Stack(
         children: [
           // Fond bleu uni de marque
           Positioned.fill(
             child: DecoratedBox(
-              decoration: const BoxDecoration(color: AppColors.primary),
+              decoration: BoxDecoration(color: authBrandColor(context)),
             ),
           ),
           // Motif technique en filigrane
@@ -66,9 +67,9 @@ class AuthChoiceScreen extends ConsumerWidget {
                             alignment: Alignment.centerLeft,
                             child: IconButton(
                               onPressed: () => context.go(AppRoutes.welcome),
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.arrow_back,
-                                color: Colors.white,
+                                color: authOnBrandColor(context),
                               ),
                             ),
                           ),
@@ -83,19 +84,21 @@ class AuthChoiceScreen extends ConsumerWidget {
                                 Icon(
                                   Icons.delivery_dining_rounded,
                                   size: 56,
-                                  color: Colors.white.withValues(alpha: 0.92),
+                                  color: authOnBrandColor(
+                                    context,
+                                  ).withValues(alpha: 0.92),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  l10n.appName,
-                                  textAlign: TextAlign.center,
-                                  style: theme.textTheme.headlineMedium
-                                      ?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: -0.4,
-                                      ),
-                                )
+                                      l10n.appName,
+                                      textAlign: TextAlign.center,
+                                      style: theme.textTheme.headlineMedium
+                                          ?.copyWith(
+                                            color: authOnBrandColor(context),
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: -0.4,
+                                          ),
+                                    )
                                     .animate()
                                     .fadeIn(duration: 500.ms)
                                     .slideY(
@@ -110,7 +113,7 @@ class AuthChoiceScreen extends ConsumerWidget {
                                 l10n.authChoiceTitle,
                                 textAlign: TextAlign.center,
                                 style: theme.textTheme.titleLarge?.copyWith(
-                                  color: Colors.white,
+                                  color: authOnBrandColor(context),
                                   fontWeight: FontWeight.w600,
                                 ),
                               )
@@ -122,7 +125,9 @@ class AuthChoiceScreen extends ConsumerWidget {
                             l10n.authChoiceSubtitle,
                             textAlign: TextAlign.center,
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.75),
+                              color: authOnBrandColor(
+                                context,
+                              ).withValues(alpha: 0.75),
                             ),
                           ),
                           const Spacer(),
@@ -169,7 +174,6 @@ class AuthChoiceScreen extends ConsumerWidget {
       ),
     );
   }
-
 }
 
 class _BlueSpaceAccent extends StatelessWidget {

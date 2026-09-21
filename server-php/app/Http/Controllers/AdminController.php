@@ -47,6 +47,42 @@ class AdminController extends Controller
         ]);
     }
 
+    public function exportDeliveries(Request $request)
+    {
+        $this->admin($request);
+        $from = $request->query('from');
+        $to = $request->query('to');
+        $query = Delivery::query()->orderBy('created_at');
+        if (is_string($from) && $from !== '') {
+            $query->whereDate('created_at', '>=', $from);
+        }
+        if (is_string($to) && $to !== '') {
+            $query->whereDate('created_at', '<=', $to);
+        }
+
+        $lines = ['id,client_id,driver_id,status,price_ariary,created_at,updated_at'];
+        foreach ($query->limit(10000)->get() as $delivery) {
+            $values = [
+                $delivery->id,
+                $delivery->client_id,
+                $delivery->driver_id,
+                $delivery->status,
+                $delivery->price_ariary,
+                optional($delivery->created_at)->toIso8601String(),
+                optional($delivery->updated_at)->toIso8601String(),
+            ];
+            $lines[] = implode(',', array_map(
+                static fn ($value): string => '"'.str_replace('"', '""', (string) ($value ?? '')).'"',
+                $values,
+            ));
+        }
+
+        return response(implode("\r\n", $lines)."\r\n", 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="majichrono-deliveries.csv"',
+        ]);
+    }
+
     public function fleet(Request $request)
     {
         $this->admin($request);

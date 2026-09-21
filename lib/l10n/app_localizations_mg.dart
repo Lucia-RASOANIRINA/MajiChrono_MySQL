@@ -2491,10 +2491,28 @@ class AppLocalizationsMg extends AppLocalizations {
   String get notifCenterEmpty => 'Tsy misy fampahafantarana aloha';
 
   @override
+  String get notifCenterMarkRead => 'Mariho ho voavaky';
+
+  @override
   String get notifCenterMarkAllRead => 'Mariho ho voavaky daholo';
 
   @override
   String get notifCenterClear => 'Fafao ny tantara';
+
+  @override
+  String get notifCenterAll => 'Rehetra';
+
+  @override
+  String get notifCenterUnread => 'Tsy mbola voavaky';
+
+  @override
+  String get notifCenterArchived => 'Voatahiry';
+
+  @override
+  String get notifCenterArchive => 'Tehirizo';
+
+  @override
+  String get notifCenterRestore => 'Avereno';
 
   @override
   String get rateCta => 'Omeo naoty ny mpitatitra';

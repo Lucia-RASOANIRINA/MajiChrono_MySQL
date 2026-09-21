@@ -854,8 +854,14 @@
 
   "notifCenterTitle": "Notifications",
   "notifCenterEmpty": "Aucune notification pour le moment",
+  "notifCenterMarkRead": "Marquer comme lue",
   "notifCenterMarkAllRead": "Tout marquer comme lu",
   "notifCenterClear": "Effacer l'historique",
+  "notifCenterAll": "Toutes",
+  "notifCenterUnread": "Non lues",
+  "notifCenterArchived": "Archivées",
+  "notifCenterArchive": "Archiver",
+  "notifCenterRestore": "Restaurer",
 
   "rateCta": "Noter le livreur",
   "rateTitle": "Noter le livreur",

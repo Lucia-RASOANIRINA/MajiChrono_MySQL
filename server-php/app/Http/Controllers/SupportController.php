@@ -43,6 +43,20 @@ class SupportController extends Controller
         return response()->json($notification->payload());
     }
 
+    public function deleteNotification(Request $request, string $notificationId)
+    {
+        $account = CurrentAccount::resolve($request);
+        $notification = Notification::where('id', $notificationId)
+            ->where('user_id', $account->id)
+            ->first();
+        if ($notification === null) {
+            throw ApiException::notFound('Notification inconnue');
+        }
+        $notification->delete();
+
+        return response()->json(['deleted' => true, 'id' => $notificationId]);
+    }
+
     public function contact(Request $request)
     {
         $account = CurrentAccount::resolve($request);
@@ -66,6 +80,27 @@ class SupportController extends Controller
         ]);
 
         return response()->json(['id' => $row->id, 'status' => $row->status], 201);
+    }
+
+    public function contacts(Request $request)
+    {
+        $account = CurrentAccount::resolve($request);
+
+        return response()->json([
+            'items' => ContactMessage::where('client_id', $account->id)
+                ->orderByDesc('created_at')
+                ->limit(100)
+                ->get()
+                ->map(fn (ContactMessage $row): array => [
+                    'id' => $row->id,
+                    'subject' => $row->subject,
+                    'message' => $row->message,
+                    'status' => $row->status,
+                    'adminReply' => $row->admin_reply,
+                    'createdAt' => optional($row->created_at)->toIso8601String(),
+                    'updatedAt' => optional($row->updated_at)->toIso8601String(),
+                ])->all(),
+        ]);
     }
 
     public function adminContacts(Request $request)

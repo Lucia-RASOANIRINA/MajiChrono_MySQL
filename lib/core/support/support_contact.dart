@@ -9,5 +9,5 @@ class SupportContact {
   /// Ligne d'assistance. Numero malgache au format canonique.
   static const String phone = '+261320000000';
 
-  static const String email = 'support@majichrono.mg';
+  static const String email = 'majichrono@majitech.mg';
 }

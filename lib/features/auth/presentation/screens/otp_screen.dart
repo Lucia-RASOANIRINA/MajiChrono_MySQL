@@ -12,6 +12,7 @@ import 'package:majichrono/app/theme/design_tokens.dart';
 import 'package:majichrono/core/error/failure.dart';
 import 'package:majichrono/features/auth/domain/entities/auth_entities.dart';
 import 'package:majichrono/features/auth/presentation/providers/auth_providers.dart';
+import 'package:majichrono/features/auth/presentation/widgets/auth_branding.dart';
 import 'package:majichrono/l10n/app_localizations.dart';
 import 'package:majichrono/shared/l10n/failure_messages.dart';
 import 'package:majichrono/shared/widgets/mc_patterns.dart';
@@ -176,13 +177,13 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
     final expired = _remaining == Duration.zero;
 
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: authBrandColor(context),
       body: Stack(
         children: [
           // Fond dégradé
           Positioned.fill(
             child: DecoratedBox(
-              decoration: const BoxDecoration(color: AppColors.primary),
+              decoration: BoxDecoration(color: authBrandColor(context)),
             ),
           ),
 

@@ -170,4 +170,9 @@ class ApiContractTest extends TestCase
         $this->getJson('/admin/settings')->assertStatus(401);
         $this->putJson('/admin/settings/key', ['value' => 'value'])->assertStatus(401);
     }
+
+    public function test_profile_role_route_remains_protected(): void
+    {
+        $this->patchJson('/me', ['role' => 'driver'])->assertStatus(401);
+    }
 }

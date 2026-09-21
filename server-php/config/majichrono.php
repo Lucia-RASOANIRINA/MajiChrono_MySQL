@@ -11,7 +11,7 @@ return [
 
     'otp_ttl_minutes' => (int) env('OTP_TTL_MINUTES', 5),
     'otp_max_attempts' => (int) env('OTP_MAX_ATTEMPTS', 3),
-    'otp_debug_codes' => (bool) env('OTP_DEBUG_CODES', false),
+    'otp_debug_codes' => (bool) env('OTP_DEBUG_CODES', false) && env('APP_ENV', 'production') !== 'production',
 
     'mail_from_address' => env('MAIL_FROM_ADDRESS', 'no-reply@majichrono.mg'),
     'mail_from_name' => env('MAIL_FROM_NAME', 'MajiChrono'),

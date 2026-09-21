@@ -54,8 +54,8 @@ class SocleHomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: isDark
-          ? const Color(0xFF0F172A)
-          : const Color(0xFFF1F5F9),
+          ? AppColors.darkBackground
+          : AppColors.lightBackground,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -90,7 +90,6 @@ class SocleHomeScreen extends ConsumerWidget {
                     online: online,
                     pending: pending,
                     deliveriesCount: deliveries.length,
-                    onDeliveries: () => context.go(AppRoutes.clientDeliveries),
                   ).animate().fade(duration: 400.ms).slideY(begin: 0.1, end: 0),
 
                   if (role == UserRole.client) ...[
@@ -453,13 +452,11 @@ class _EnhancedStatsCard extends StatelessWidget {
     required this.online,
     required this.pending,
     required this.deliveriesCount,
-    required this.onDeliveries,
   });
 
   final bool online;
   final int pending;
   final int deliveriesCount;
-  final VoidCallback onDeliveries;
 
   @override
   Widget build(BuildContext context) {
@@ -468,63 +465,57 @@ class _EnhancedStatsCard extends StatelessWidget {
         ? const Color(0xFF93C5FD)
         : const Color(0xFF1D4ED8);
 
-    return InkWell(
-      onTap: onDeliveries,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: isDark ? 0.2 : 0.05),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _StatTile(
+              icon: Icons.local_shipping_outlined,
+              value: '$deliveriesCount',
+              label: 'Courses',
+              color: iconColor,
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: _StatTile(
-                icon: Icons.local_shipping_outlined,
-                value: '$deliveriesCount',
-                label: 'Courses',
-                color: iconColor,
-              ),
+          ),
+          _buildDivider(isDark),
+          Expanded(
+            child: _StatTile(
+              icon: online ? Icons.wifi : Icons.wifi_off_rounded,
+              value: online ? 'En ligne' : 'Hors-ligne',
+              label: 'Réseau',
+              color: online
+                  ? iconColor
+                  : (isDark
+                        ? const Color(0xFFFB7185)
+                        : const Color(0xFFBE123C)),
             ),
-            _buildDivider(isDark),
-            Expanded(
-              child: _StatTile(
-                icon: online ? Icons.wifi : Icons.wifi_off_rounded,
-                value: online ? 'En ligne' : 'Hors-ligne',
-                label: 'Réseau',
-                color: online
-                    ? iconColor
-                    : (isDark
-                          ? const Color(0xFFFB7185)
-                          : const Color(0xFFBE123C)),
-              ),
+          ),
+          _buildDivider(isDark),
+          Expanded(
+            child: _StatTile(
+              icon: Icons.sync_rounded,
+              value: pending > 0 ? '$pending à synchro' : 'À jour',
+              label: 'Données',
+              color: pending > 0
+                  ? (isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309))
+                  : iconColor,
             ),
-            _buildDivider(isDark),
-            Expanded(
-              child: _StatTile(
-                icon: Icons.sync_rounded,
-                value: pending > 0 ? '$pending à synchro' : 'À jour',
-                label: 'Données',
-                color: pending > 0
-                    ? (isDark
-                          ? const Color(0xFFFBBF24)
-                          : const Color(0xFFB45309))
-                    : iconColor,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -813,9 +804,9 @@ class _WalletBalanceCard extends ConsumerWidget {
                 color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.account_balance_wallet_outlined,
-                color: AppColors.primary,
+                color: isDark ? const Color(0xFF93C5FD) : AppColors.primary,
                 size: 22,
               ),
             ),

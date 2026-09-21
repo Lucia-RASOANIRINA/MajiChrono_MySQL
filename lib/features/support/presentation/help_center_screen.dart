@@ -119,8 +119,10 @@ class HelpCenterScreen extends StatelessWidget {
           const Divider(height: AppSpacing.lg),
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.report_problem_outlined,
-                color: AppColors.warning),
+            leading: const Icon(
+              Icons.report_problem_outlined,
+              color: AppColors.warning,
+            ),
             title: Text(l10n.helpReportProblem),
             subtitle: Text(l10n.helpReportProblemHelp),
             trailing: const Icon(Icons.chevron_right),

@@ -56,6 +56,29 @@ class NotificationCenter extends Notifier<List<CenterNotification>> {
     await _persist();
   }
 
+  Future<void> archiveAt(int index) async {
+    if (index < 0 || index >= state.length) return;
+    final next = [...state];
+    next[index] = next[index].copyWith(archived: true);
+    state = next;
+    await _persist();
+  }
+
+  Future<void> restoreAt(int index) async {
+    if (index < 0 || index >= state.length) return;
+    final next = [...state];
+    next[index] = next[index].copyWith(archived: false);
+    state = next;
+    await _persist();
+  }
+
+  Future<void> removeAt(int index) async {
+    if (index < 0 || index >= state.length) return;
+    final next = [...state]..removeAt(index);
+    state = next;
+    await _persist();
+  }
+
   Future<void> clear() async {
     state = const [];
     await _persist();
@@ -66,6 +89,12 @@ final notificationCenterProvider =
     NotifierProvider<NotificationCenter, List<CenterNotification>>(
       NotificationCenter.new,
     );
+
+enum NotificationFilter { all, unread, archived }
+
+final notificationFilterProvider = StateProvider<NotificationFilter>(
+  (ref) => NotificationFilter.all,
+);
 
 /// Nombre de notifications non lues, pour la pastille de la cloche.
 final unreadNotificationCountProvider = Provider<int>((ref) {

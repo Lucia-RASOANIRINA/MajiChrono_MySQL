@@ -173,6 +173,7 @@ class ApiEndpoints {
   // --- Notifications et support ---------------------------------------
   static const String notifications = '/notifications';
   static String notificationRead(String id) => '/notifications/$id/read';
+  static String notificationDelete(String id) => '/notifications/$id';
   static const String contact = '/contact';
   static const String adminContact = '/admin/contact';
   static String adminContactReply(String id) => '/admin/contact/$id/reply';
@@ -190,6 +191,8 @@ class ApiEndpoints {
   // --- Administration --------------------------------------------------
   static const String adminDashboard = '/admin/dashboard';
   static const String adminStats = '/admin/stats';
+  static const String adminDeliveriesReport =
+      '/admin/reports/deliveries.csv';
   static const String adminFleet = '/admin/fleet';
   static const String adminKyc = '/admin/kyc';
   static String adminKycReview(String id) => '/admin/kyc/$id/review';

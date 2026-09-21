@@ -40,9 +40,10 @@ class RoleShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Le fond suit la charte du home (ardoise clair / bleu nuit) pour que la
-      // barre flottante se detache du contenu.
-      backgroundColor: Colors.transparent,
+      // La zone sous la barre doit rester dans la surface de l'application.
+      // Un fond transparent révélait le fond noir du système sur certains
+      // appareils et produisait une bande visuellement incohérente.
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       // Keep the last controls above the navigation bar. Extending the body
       // underneath the floating bar hid buttons on smaller phones.
       extendBody: false,
@@ -89,15 +90,16 @@ class _ModernNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final border = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    final theme = Theme.of(context);
+    final surface = theme.colorScheme.surface;
+    final border = theme.colorScheme.outlineVariant;
 
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
         child: Container(
-          height: 68,
+          height: 70,
           padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
             color: surface,

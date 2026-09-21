@@ -77,6 +77,7 @@ class AppTheme {
           ? const Color(0xFFF1F5F9)
           : const Color(0xFF0F172A),
       textTheme: text,
+      iconTheme: IconThemeData(color: scheme.onSurface),
       splashFactory: InkSparkle.splashFactory,
       appBarTheme: AppBarTheme(
         // La barre se fond dans le fond ardoise plutot que de poser une bande
@@ -187,6 +188,13 @@ class AppTheme {
             ? AppColors.lightSurface
             : AppColors.darkSurface,
         indicatorColor: scheme.primaryContainer,
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? scheme.onPrimaryContainer
+                : scheme.onSurfaceVariant,
+          ),
+        ),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         // Iconographie systematiquement doublee d'un libelle (§15.1).
         labelTextStyle: WidgetStatePropertyAll(

@@ -110,6 +110,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     final name = _driverName(ref);
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -198,34 +199,32 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                         // (EXI-L05, §15).
                         final dismissed = ref.watch(dismissedOffersProvider);
                         final items = all
-                            .where(
-                              (o) => !dismissed.contains(o.delivery.id),
-                            )
+                            .where((o) => !dismissed.contains(o.delivery.id))
                             .toList();
                         return items.isEmpty
-                          ? SizedBox(
-                              height: 220,
-                              child: Card(
-                                child: McEmptyState(
-                                  icon: Icons.inbox_outlined,
-                                  title: l10n.driverNoOffers,
-                                  message: l10n.driverNoOffersHelp,
-                                ),
-                              ),
-                            )
-                          : Column(
-                              children: [
-                                for (final offer in items) ...[
-                                  AvailableDeliveryCard(
-                                    key: ValueKey(
-                                      '${offer.delivery.id}_$_cycle',
-                                    ),
-                                    offer: offer,
+                            ? SizedBox(
+                                height: 220,
+                                child: Card(
+                                  child: McEmptyState(
+                                    icon: Icons.inbox_outlined,
+                                    title: l10n.driverNoOffers,
+                                    message: l10n.driverNoOffersHelp,
                                   ),
-                                  const SizedBox(height: AppSpacing.md),
+                                ),
+                              )
+                            : Column(
+                                children: [
+                                  for (final offer in items) ...[
+                                    AvailableDeliveryCard(
+                                      key: ValueKey(
+                                        '${offer.delivery.id}_$_cycle',
+                                      ),
+                                      offer: offer,
+                                    ),
+                                    const SizedBox(height: AppSpacing.md),
+                                  ],
                                 ],
-                              ],
-                            );
+                              );
                       },
                     ),
                 ],
@@ -270,7 +269,9 @@ class _DashboardStats extends ConsumerWidget {
         .length;
     final active = ref.watch(activeDriverDeliveriesProvider).length;
     final earnings = ref.watch(earningsProvider).valueOrNull;
-    final balance = ref.watch(majiPayBalanceProvider(UserRole.driver)).valueOrNull;
+    final balance = ref
+        .watch(majiPayBalanceProvider(UserRole.driver))
+        .valueOrNull;
 
     String orDash(int? v) => v == null ? '—' : '$v';
 
@@ -355,8 +356,11 @@ class _StatTile extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: (dense ? theme.textTheme.bodyMedium : theme.textTheme.titleMedium)
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style:
+                  (dense
+                          ? theme.textTheme.bodyMedium
+                          : theme.textTheme.titleMedium)
+                      ?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 2),
             Text(

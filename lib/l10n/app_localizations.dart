@@ -4712,6 +4712,12 @@ abstract class AppLocalizations {
   /// **'Aucune notification pour le moment'**
   String get notifCenterEmpty;
 
+  /// No description provided for @notifCenterMarkRead.
+  ///
+  /// In fr, this message translates to:
+  /// **'Marquer comme lue'**
+  String get notifCenterMarkRead;
+
   /// No description provided for @notifCenterMarkAllRead.
   ///
   /// In fr, this message translates to:
@@ -4723,6 +4729,36 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Effacer l\'historique'**
   String get notifCenterClear;
+
+  /// No description provided for @notifCenterAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Toutes'**
+  String get notifCenterAll;
+
+  /// No description provided for @notifCenterUnread.
+  ///
+  /// In fr, this message translates to:
+  /// **'Non lues'**
+  String get notifCenterUnread;
+
+  /// No description provided for @notifCenterArchived.
+  ///
+  /// In fr, this message translates to:
+  /// **'Archivées'**
+  String get notifCenterArchived;
+
+  /// No description provided for @notifCenterArchive.
+  ///
+  /// In fr, this message translates to:
+  /// **'Archiver'**
+  String get notifCenterArchive;
+
+  /// No description provided for @notifCenterRestore.
+  ///
+  /// In fr, this message translates to:
+  /// **'Restaurer'**
+  String get notifCenterRestore;
 
   /// No description provided for @rateCta.
   ///

@@ -89,7 +89,7 @@ class Account extends Model
             // mobile, comme le ferait une vraie absence de valeur.
             'phone' => filled($this->phone) ? $this->phone : null,
             'email' => filled($this->email) ? $this->email : null,
-            'role' => $this->role,
+            'role' => $this->hasUnselectedMobileProfile() ? null : $this->role,
             'firstName' => $this->first_name,
             'lastName' => $this->last_name,
             'displayName' => $this->resolvedDisplayName(),
@@ -98,5 +98,21 @@ class Account extends Model
             'kycStatus' => $this->kyc_status,
             'createdAt' => optional($this->created_at)->toIso8601String(),
         ];
+    }
+
+    public function hasUnselectedMobileProfile(): bool
+    {
+        if ($this->role !== 'client'
+            || filled($this->full_name)
+            || filled($this->first_name)
+            || filled($this->last_name)) {
+            return false;
+        }
+
+        return ! Delivery::query()
+            ->where(function ($query): void {
+                $query->where('client_id', $this->id)->orWhere('driver_id', $this->id);
+            })
+            ->exists();
     }
 }

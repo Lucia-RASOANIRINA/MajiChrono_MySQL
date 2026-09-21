@@ -26,16 +26,20 @@ class DisputesListScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(l10n.disputesTitle)),
       body: disputes.when(
         loading: () => const McSkeletonList(),
-        error: (_, _) => McEmptyState(
-          icon: Icons.gavel_outlined,
-          title: l10n.disputesEmpty,
-          message: l10n.errorUnknown,
+        error: (_, _) => Center(
+          child: McEmptyState(
+            icon: Icons.gavel_outlined,
+            title: l10n.disputesEmpty,
+            message: l10n.errorUnknown,
+          ),
         ),
         data: (items) => items.isEmpty
-            ? McEmptyState(
-                icon: Icons.gavel_outlined,
-                title: l10n.disputesEmpty,
-                message: l10n.disputesEmptyHelp,
+            ? Center(
+                child: McEmptyState(
+                  icon: Icons.gavel_outlined,
+                  title: l10n.disputesEmpty,
+                  message: l10n.disputesEmptyHelp,
+                ),
               )
             : RefreshIndicator(
                 onRefresh: () async {
@@ -96,7 +100,9 @@ class _DisputeTile extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             l10n.disputeOpenedOn(_formatDate(dispute.openedAt)),
-            style: theme.textTheme.bodySmall?.copyWith(color: AppColors.neutral),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColors.neutral,
+            ),
           ),
         ],
       ),

@@ -5,12 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'package:majichrono/app/router/app_routes.dart';
 import 'package:majichrono/app/theme/app_colors.dart';
 import 'package:majichrono/app/theme/design_tokens.dart';
+import 'package:majichrono/core/support/support_contact.dart';
 import 'package:majichrono/features/auth/presentation/controllers/auth_state.dart';
 import 'package:majichrono/features/auth/presentation/providers/auth_providers.dart';
 import 'package:majichrono/features/chat/presentation/chat_providers.dart';
 import 'package:majichrono/l10n/app_localizations.dart';
 import 'package:majichrono/shared/widgets/mc_empty_state.dart';
 import 'package:majichrono/shared/widgets/mc_skeleton.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Espace « Messages » : la boite de reception des conversations.
 ///
@@ -26,19 +28,29 @@ class MessagesScreen extends ConsumerWidget {
     final conversations = ref.watch(conversationsProvider);
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(title: Text(l10n.messagesTitle)),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _startConversation(context),
+        icon: const Icon(Icons.edit_outlined),
+        label: Text(l10n.helpEmail),
+      ),
       body: conversations.when(
         loading: () => const McSkeletonList(),
-        error: (_, _) => McEmptyState(
-          icon: Icons.forum_outlined,
-          title: l10n.messagesEmpty,
-          message: l10n.errorNetwork,
+        error: (_, _) => Center(
+          child: McEmptyState(
+            icon: Icons.forum_outlined,
+            title: l10n.messagesEmpty,
+            message: l10n.errorNetwork,
+          ),
         ),
         data: (items) => items.isEmpty
-            ? McEmptyState(
-                icon: Icons.forum_outlined,
-                title: l10n.messagesEmpty,
-                message: l10n.messagesEmptyHelp,
+            ? Center(
+                child: McEmptyState(
+                  icon: Icons.forum_outlined,
+                  title: l10n.messagesEmpty,
+                  message: l10n.messagesEmptyHelp,
+                ),
               )
             : RefreshIndicator(
                 onRefresh: () async {
@@ -62,6 +74,43 @@ class MessagesScreen extends ConsumerWidget {
               ),
       ),
     );
+  }
+
+  Future<void> _startConversation(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.support_agent_outlined),
+              title: Text(l10n.helpContactTitle),
+              subtitle: Text(l10n.helpContactHelp),
+              onTap: () => Navigator.pop(context, 'admin'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.local_shipping_outlined),
+              title: Text(l10n.messagesTitle),
+              subtitle: Text(l10n.messagesEmptyHelp),
+              onTap: () => Navigator.pop(context, 'delivery'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!context.mounted || choice == null) return;
+    if (choice == 'admin') {
+      final uri = Uri(
+        scheme: 'mailto',
+        path: SupportContact.email,
+        query: 'subject=${Uri.encodeComponent(l10n.helpReportSubject)}',
+      );
+      await launchUrl(uri);
+      return;
+    }
+    await context.push(AppRoutes.clientDeliveries);
   }
 }
 

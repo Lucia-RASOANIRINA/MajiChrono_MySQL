@@ -2,7 +2,7 @@
 ///
 /// Usage :
 ///   flutter run --dart-define=API_MODE=mock
-///   flutter run --dart-define=API_MODE=live --dart-define=API_BASE_URL=https://majichrono.majitech.mg/api/v1
+///   flutter run --dart-define=API_MODE=live --dart-define=API_BASE_URL=https://majichrono.majitech.mg/mobile-api
 library;
 
 enum ApiMode { mock, live }
@@ -26,7 +26,7 @@ class AppConfig {
     const flavorRaw = String.fromEnvironment('FLAVOR', defaultValue: 'dev');
     const baseUrl = String.fromEnvironment(
       'API_BASE_URL',
-      defaultValue: 'https://majichrono.majitech.mg/api/v1',
+      defaultValue: 'https://majichrono.majitech.mg/mobile-api',
     );
     const dsn = String.fromEnvironment('SENTRY_DSN');
 

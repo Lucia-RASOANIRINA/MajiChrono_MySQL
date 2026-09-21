@@ -57,10 +57,7 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         icon: const Icon(Icons.mark_email_unread_outlined),
-        title: Text(
-          l10n.authSmsUnavailableTitle,
-          textAlign: TextAlign.center,
-        ),
+        title: Text(l10n.authSmsUnavailableTitle, textAlign: TextAlign.center),
         content: Text(
           l10n.authSmsUnavailableMessage,
           textAlign: TextAlign.center,
@@ -125,7 +122,7 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
         : 'Amin\'ny fanohizana dia ekenao ny fepetra fampiasana';
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           Positioned(
@@ -135,20 +132,16 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
             height: 408,
             child: const ColoredBox(color: AppColors.primary),
           ),
-          const Positioned(
-            top: 104,
-            right: -18,
-            child: _PhoneBlueAccent(),
-          ),
+          const Positioned(top: 104, right: -18, child: _PhoneBlueAccent()),
           Positioned(
             top: 0,
             left: 8,
             child: SafeArea(
               child: IconButton(
                 onPressed: () => context.go(AppRoutes.authChoice),
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back,
-                  color: Colors.white,
+                  color: authSurfaceColor(context),
                   size: 28,
                 ),
                 tooltip: MaterialLocalizations.of(context).backButtonTooltip,
@@ -201,9 +194,7 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            widget.isSignUp
-                                ? l10n.authSignUp
-                                : l10n.authSignIn,
+                            widget.isSignUp ? l10n.authSignUp : l10n.authSignIn,
                             style: theme.textTheme.headlineSmall?.copyWith(
                               color: AppColors.primary,
                               fontWeight: FontWeight.w700,
@@ -449,8 +440,12 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 foregroundColor: Colors.white,
-                                disabledBackgroundColor: const Color(0xFFE2E6ED),
-                                disabledForegroundColor: const Color(0xFF64748B),
+                                disabledBackgroundColor: const Color(
+                                  0xFFE2E6ED,
+                                ),
+                                disabledForegroundColor: const Color(
+                                  0xFF64748B,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
@@ -487,25 +482,25 @@ class _PhoneInputScreenState extends ConsumerState<PhoneInputScreen> {
                             ),
                           ),
                           const SizedBox(height: AppSpacing.xs),
-                            TextButton(
-                              onPressed: _busy
-                                  ? null
-                                  : () => context.go(
-                                        widget.isSignUp
-                                            ? AppRoutes.authPhone
-                                            : AppRoutes.authPhoneSignUp,
-                                      ),
-                              child: Text(
-                                widget.isSignUp
-                                    ? l10n.authAlreadyAccount
-                                    : '${l10n.authNoAccount} ${l10n.authSignUp}',
-                                style: const TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                          TextButton(
+                            onPressed: _busy
+                                ? null
+                                : () => context.go(
+                                    widget.isSignUp
+                                        ? AppRoutes.authPhone
+                                        : AppRoutes.authPhoneSignUp,
+                                  ),
+                            child: Text(
+                              widget.isSignUp
+                                  ? l10n.authAlreadyAccount
+                                  : '${l10n.authNoAccount} ${l10n.authSignUp}',
+                              style: const TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
+                          ),
 
                           // Séparateur et Google
                           if (googleAccounts.isNotEmpty) ...[

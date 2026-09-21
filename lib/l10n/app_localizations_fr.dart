@@ -2485,10 +2485,28 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notifCenterEmpty => 'Aucune notification pour le moment';
 
   @override
+  String get notifCenterMarkRead => 'Marquer comme lue';
+
+  @override
   String get notifCenterMarkAllRead => 'Tout marquer comme lu';
 
   @override
   String get notifCenterClear => 'Effacer l\'historique';
+
+  @override
+  String get notifCenterAll => 'Toutes';
+
+  @override
+  String get notifCenterUnread => 'Non lues';
+
+  @override
+  String get notifCenterArchived => 'Archivées';
+
+  @override
+  String get notifCenterArchive => 'Archiver';
+
+  @override
+  String get notifCenterRestore => 'Restaurer';
 
   @override
   String get rateCta => 'Noter le livreur';

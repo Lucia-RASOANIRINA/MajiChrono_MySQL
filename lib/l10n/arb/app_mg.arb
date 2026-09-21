@@ -849,8 +849,14 @@
 
   "notifCenterTitle": "Fampahafantarana",
   "notifCenterEmpty": "Tsy misy fampahafantarana aloha",
+  "notifCenterMarkRead": "Mariho ho voavaky",
   "notifCenterMarkAllRead": "Mariho ho voavaky daholo",
   "notifCenterClear": "Fafao ny tantara",
+  "notifCenterAll": "Rehetra",
+  "notifCenterUnread": "Tsy mbola voavaky",
+  "notifCenterArchived": "Voatahiry",
+  "notifCenterArchive": "Tehirizo",
+  "notifCenterRestore": "Avereno",
 
   "rateCta": "Omeo naoty ny mpitatitra",
   "rateTitle": "Omeo naoty ny mpitatitra",

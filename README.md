@@ -139,11 +139,61 @@ lib/
 
 ---
 
-## 4. Le backend FastAPI + MySQL
+## 4. Les backends et le déploiement
 
-Le contrat d'interface est disponible sous `server/`. Le serveur FastAPI
-implémente les routes d'authentification, livraisons, suivi, paiement, KYC,
-litiges et administration. Cette variante utilise MySQL fourni par XAMPP :
+Le backend actuellement destiné au mobile et déployé sur DirectAdmin est
+Laravel/PHP dans [`server-php/`](./server-php/). Le backend Python dans
+[`server/`](./server/) reste une référence de simulation et de compatibilité
+pour les scénarios hors ligne ; il ne doit pas être utilisé comme indication de
+l'URL de production.
+
+### Backend Laravel (production mobile)
+
+Le point d'entrée public est :
+
+```text
+https://majichrono.majitech.mg/mobile-api
+```
+
+Le contenu de `server-php/laravel-deploy.zip` doit être extrait directement
+dans :
+
+```text
+domains/majichrono.majitech.mg/public_html/mobile-api/
+```
+
+Le ZIP contient directement `index.php`, `.htaccess`, `app/`, `routes/` et
+`vendor/`. Après déploiement, vérifier `/health`, `/health/ready`, puis les
+parcours authentifiés avec un compte de préproduction.
+
+Les rapports d'exploitation sont exportables par un administrateur avec :
+
+```text
+GET /admin/reports/deliveries.csv?from=2026-09-01&to=2026-09-30
+```
+
+La route répond en CSV UTF-8 et impose un jeton administrateur.
+
+### Recette terrain
+
+Avant publication, exécuter sur un appareil Android physique :
+
+1. couper complètement le réseau pendant la création d'une course ;
+2. vérifier la présence de la course dans la file locale ;
+3. rétablir le réseau et vérifier une seule synchronisation ;
+4. tester le GPS écran verrouillé pendant 15 minutes ;
+5. répéter en 2G/EDGE et vérifier l'adaptation de la cadence ;
+6. mesurer la batterie après 30 minutes de suivi ;
+7. vérifier les permissions refusées puis réaccordées ;
+8. fermer et rouvrir l'application pendant la synchronisation.
+
+Chaque scénario doit être contrôlé avec les journaux de synchronisation et
+l'absence de doublons côté serveur.
+
+### Backend Python de référence
+
+Le contrat historique et le backend de simulation sont disponibles sous
+`server/`. Cette variante utilise MySQL fourni par XAMPP :
 
 ```text
 DATABASE_URL=mysql+pymysql://root:@127.0.0.1:3306/majichrono_mysql
@@ -550,14 +600,11 @@ Pour un déploiement manuel : `cd server && python -m venv .venv && pip install 
 
 ### Serveur et exploitation
 
-- **Python 3.12 + FastAPI + Uvicorn** : API REST.
-- **Pydantic Settings** : configuration par variables d'environnement.
-- **SQLAlchemy + Alembic** : modèle de données et schéma SQL.
-- **MySQL XAMPP** : base locale de cette variante.
-- **PyMySQL + SQLAlchemy** : connexion et mapping relationnel.
-- **bcrypt** : hachage compatible avec le site web PHP.
-- **JWT** : jetons d'accès et de rafraîchissement.
-- **DirectAdmin/Passenger** : hébergement de l'API.
+- **Laravel/PHP** : API mobile actuellement déployée.
+- **Python 3.12 + FastAPI** : backend de référence et simulation historique.
+- **MySQL/MariaDB** : base partagée.
+- **bcrypt et JWT** : compatibilité d'authentification.
+- **DirectAdmin/Passenger** : hébergement de l'API Laravel.
 
 ---
 

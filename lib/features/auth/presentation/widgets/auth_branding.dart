@@ -7,6 +7,21 @@ import 'package:majichrono/app/theme/app_colors.dart';
 import 'package:majichrono/app/theme/design_tokens.dart';
 import 'package:majichrono/l10n/app_localizations.dart';
 
+Color authBrandColor(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+    ? AppColors.darkBackground
+    : AppColors.primary;
+
+Color authSurfaceColor(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+    ? AppColors.darkSurface
+    : Colors.white;
+
+Color authOnBrandColor(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+    ? AppColors.darkOnSurface
+    : Colors.white;
+
 /// Fournisseur d'identite propose a cote du mot de passe.
 ///
 /// Les trois sont traites de la meme facon : ils ne servent qu'a **designer une
@@ -270,98 +285,96 @@ class McAuthScaffold extends StatelessWidget {
       backgroundColor: AppColors.primary,
       body: Stack(
         children: [
-          const Positioned.fill(
-            child: ColoredBox(color: AppColors.primary),
-          ),
+          const Positioned.fill(child: ColoredBox(color: AppColors.primary)),
           SafeArea(
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: AppSizes.minTouchTarget,
-                    child: Row(
-                      children: [
-                        if (showBack)
-                          IconButton(
-                            onPressed: onBack ?? () => _goBack(context),
-                            icon: const Icon(
-                              Icons.arrow_back,
-                              color: Colors.white,
-                            ),
-                            tooltip: MaterialLocalizations.of(
-                              context,
-                            ).backButtonTooltip,
+            child: Column(
+              children: [
+                SizedBox(
+                  height: AppSizes.minTouchTarget,
+                  child: Row(
+                    children: [
+                      if (showBack)
+                        IconButton(
+                          onPressed: onBack ?? () => _goBack(context),
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
                           ),
-                      ],
+                          tooltip: MaterialLocalizations.of(
+                            context,
+                          ).backButtonTooltip,
+                        ),
+                    ],
+                  ),
+                ),
+                if (title != null) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  const Icon(
+                    Icons.delivery_dining_rounded,
+                    size: 52,
+                    color: AppColors.primaryLight,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    title!,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  if (title != null) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    const Icon(
-                      Icons.delivery_dining_rounded,
-                      size: 52,
-                      color: AppColors.primaryLight,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      title!,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                  if (subtitle != null) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.xl,
-                      ),
-                      child: Text(
-                        subtitle!,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.78),
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: AppSpacing.xl),
-
-                  // Le contenu vit sur une feuille claire arrondie : le contraste
-                  // avec le fond sombre delimite ou l'on saisit, ce qu'un ecran
-                  // entierement bleu ne faisait pas.
-                  Expanded(
-                    child: _RiseIn(
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(32),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.22),
-                              blurRadius: 24,
-                              offset: const Offset(0, -6),
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.xl,
-                          AppSpacing.xl,
-                          AppSpacing.xl,
-                          0,
-                        ),
-                        child: child,
-                      ),
-                    ),
-                  ),
-                  ?footer,
                 ],
-              ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xl,
+                    ),
+                    child: Text(
+                      subtitle!,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.78),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.xl),
+
+                // Le contenu vit sur une feuille claire arrondie : le contraste
+                // avec le fond sombre delimite ou l'on saisit, ce qu'un ecran
+                // entierement bleu ne faisait pas.
+                Expanded(
+                  child: _RiseIn(
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(32),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.22),
+                            blurRadius: 24,
+                            offset: const Offset(0, -6),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.xl,
+                        AppSpacing.xl,
+                        AppSpacing.xl,
+                        0,
+                      ),
+                      child: child,
+                    ),
+                  ),
+                ),
+                ?footer,
+              ],
+            ),
           ),
         ],
       ),

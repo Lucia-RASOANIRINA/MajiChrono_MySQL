@@ -13,6 +13,7 @@ import 'package:majichrono/core/error/failure.dart';
 import 'package:majichrono/features/auth/domain/entities/auth_entities.dart';
 import 'package:majichrono/features/auth/domain/entities/google_entities.dart';
 import 'package:majichrono/features/auth/presentation/providers/auth_providers.dart';
+import 'package:majichrono/features/auth/presentation/widgets/auth_branding.dart';
 import 'package:majichrono/l10n/app_localizations.dart';
 import 'package:majichrono/shared/l10n/failure_messages.dart';
 import 'package:majichrono/shared/widgets/mc_patterns.dart';
@@ -181,9 +182,7 @@ class _EmailCodeScreenState extends ConsumerState<EmailCodeScreen>
   Future<void> _registerWithEmail() async {
     final verification = _createdVerification;
     if (_registerBusy || verification == null) return;
-    await ref
-        .read(authControllerProvider.notifier)
-        .onOtpVerified(verification);
+    await ref.read(authControllerProvider.notifier).onOtpVerified(verification);
   }
 
   Future<void> _resend() async {
@@ -235,13 +234,13 @@ class _EmailCodeScreenState extends ConsumerState<EmailCodeScreen>
     final expired = _remaining == Duration.zero;
 
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: authBrandColor(context),
       body: Stack(
         children: [
           // Fond dégradé
           Positioned.fill(
             child: DecoratedBox(
-              decoration: const BoxDecoration(color: AppColors.primary),
+              decoration: BoxDecoration(color: authBrandColor(context)),
             ),
           ),
 
@@ -280,9 +279,9 @@ class _EmailCodeScreenState extends ConsumerState<EmailCodeScreen>
                             onPressed: () {
                               context.go(AppRoutes.authSignIn);
                             },
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.arrow_back,
-                              color: Colors.white,
+                              color: authOnBrandColor(context),
                               size: 26,
                             ),
                             padding: EdgeInsets.zero,
@@ -306,7 +305,7 @@ class _EmailCodeScreenState extends ConsumerState<EmailCodeScreen>
                           width: double.infinity,
                           padding: const EdgeInsets.all(AppSpacing.lg),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: authSurfaceColor(context),
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(

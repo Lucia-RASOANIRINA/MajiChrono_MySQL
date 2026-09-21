@@ -40,7 +40,8 @@ class MeController extends Controller
 
             // Le profil ne se choisit qu'une fois : en changer changerait la
             // nature du compte et l'historique qui s'y rattache.
-            if ($account->role !== null && $account->role !== $role) {
+            if ($account->role !== null && $account->role !== $role
+                && ! $account->hasUnselectedMobileProfile()) {
                 throw ApiException::conflict('role_already_set', 'Profil deja defini');
             }
 

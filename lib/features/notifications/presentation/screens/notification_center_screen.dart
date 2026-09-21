@@ -22,9 +22,18 @@ class NotificationCenterScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final items = ref.watch(notificationCenterProvider);
+    final allItems = ref.watch(notificationCenterProvider);
+    final filter = ref.watch(notificationFilterProvider);
+    final items = allItems.where((item) {
+      if (filter == NotificationFilter.unread) {
+        return !item.read && !item.archived;
+      }
+      if (filter == NotificationFilter.archived) return item.archived;
+      return !item.archived;
+    }).toList();
     final controller = ref.read(notificationCenterProvider.notifier);
     final hasUnread = items.any((n) => !n.read);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -44,50 +53,122 @@ class NotificationCenterScreen extends ConsumerWidget {
             ),
         ],
       ),
-      body: items.isEmpty
-          ? McEmptyState(
-              icon: Icons.notifications_none_outlined,
-              title: l10n.notifCenterTitle,
-              message: l10n.notifCenterEmpty,
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.md,
-                AppSpacing.md,
-                AppSpacing.xxl,
-              ),
-              itemCount: items.length,
-              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return Card(
-                  child: _NotificationTile(
-                    item: item,
-                    onTap: () {
-                      controller.markRead(index);
-                      final route = item.route;
-                      if (route != null && route.isNotEmpty) {
-                        context.go(route);
-                      }
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.sm,
+              AppSpacing.md,
+              0,
+            ),
+            child: SegmentedButton<NotificationFilter>(
+              segments: [
+                ButtonSegment(
+                  value: NotificationFilter.all,
+                  label: Text(l10n.notifCenterAll),
+                ),
+                ButtonSegment(
+                  value: NotificationFilter.unread,
+                  label: Text(l10n.notifCenterUnread),
+                ),
+                ButtonSegment(
+                  value: NotificationFilter.archived,
+                  label: Text(l10n.notifCenterArchived),
+                ),
+              ],
+              selected: {filter},
+              showSelectedIcon: false,
+              onSelectionChanged: (value) =>
+                  ref.read(notificationFilterProvider.notifier).state =
+                      value.first,
+            ),
+          ),
+          Expanded(
+            child: items.isEmpty
+                ? Center(
+                    child: McEmptyState(
+                      icon: Icons.notifications_none_outlined,
+                      title: l10n.notifCenterTitle,
+                      message: l10n.notifCenterEmpty,
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.xxl,
+                    ),
+                    itemCount: items.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AppSpacing.sm),
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      final sourceIndex = allItems.indexOf(item);
+                      return Dismissible(
+                        key: ValueKey(
+                          '${item.receivedAt.microsecondsSinceEpoch}-$index',
+                        ),
+                        direction: DismissDirection.endToStart,
+                        onDismissed: (_) => controller.removeAt(sourceIndex),
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: AppSpacing.lg),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.error,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.white,
+                          ),
+                        ),
+                        child: Card(
+                          child: _NotificationTile(
+                            item: item,
+                            onMarkRead: item.read
+                                ? null
+                                : () => controller.markRead(sourceIndex),
+                            onArchive: item.archived
+                                ? () => controller.restoreAt(sourceIndex)
+                                : () => controller.archiveAt(sourceIndex),
+                            onTap: () {
+                              controller.markRead(sourceIndex);
+                              final route = item.route;
+                              if (route != null && route.isNotEmpty) {
+                                context.go(route);
+                              }
+                            },
+                          ),
+                        ),
+                      );
                     },
                   ),
-                );
-              },
-            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _NotificationTile extends StatelessWidget {
-  const _NotificationTile({required this.item, required this.onTap});
+  const _NotificationTile({
+    required this.item,
+    required this.onTap,
+    required this.onMarkRead,
+    required this.onArchive,
+  });
 
   final CenterNotification item;
   final VoidCallback onTap;
+  final VoidCallback? onMarkRead;
+  final VoidCallback onArchive;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final (icon, color) = _channelStyle(item.channel, theme);
 
     return ListTile(
@@ -109,27 +190,46 @@ class _NotificationTile extends StatelessWidget {
         ),
       ),
       subtitle: Text(item.body, maxLines: 2, overflow: TextOverflow.ellipsis),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            _stamp(item.receivedAt),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          if (!item.read) ...[
-            const SizedBox(height: 6),
-            Container(
-              width: 9,
-              height: 9,
-              decoration: BoxDecoration(
-                color: AppColors.accent,
-                shape: BoxShape.circle,
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                _stamp(item.receivedAt),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-            ),
-          ],
+              if (!item.read) ...[
+                const SizedBox(height: 6),
+                Container(
+                  width: 9,
+                  height: 9,
+                  decoration: const BoxDecoration(
+                    color: AppColors.accent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          PopupMenuButton<String>(
+            tooltip: l10n.notifCenterTitle,
+            onSelected: (value) {
+              if (value == 'read') onMarkRead?.call();
+              if (value == 'archive') onArchive();
+            },
+            itemBuilder: (_) => [
+              if (onMarkRead != null)
+                PopupMenuItem(
+                  value: 'read',
+                  child: Text(l10n.notifCenterMarkRead),
+                ),
+            ],
+          ),
         ],
       ),
     );

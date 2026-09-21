@@ -106,12 +106,6 @@ class ApiClient {
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
     }
-    if (token != null) {
-      options.headers['Authorization'] = 'Bearer $token';
-    }
-    if (token != null) {
-      options.headers['Authorization'] = 'Bearer $token';
-    }
     handler.next(options);
   }
 
@@ -128,7 +122,9 @@ class ApiClient {
         final other => other,
       };
       final version = Platform.operatingSystemVersion.trim();
-      return version.isEmpty ? os : '$os - ${version.split(RegExp(r"[ (]")).first}';
+      return version.isEmpty
+          ? os
+          : '$os - ${version.split(RegExp(r"[ (]")).first}';
     } catch (_) {
       return 'Appareil';
     }
@@ -234,12 +230,14 @@ class ApiClient {
         await get<Map<String, dynamic>>('/health');
         return DateTime.now().difference(started).inMilliseconds;
       } on Failure {
-        // The hosted API currently does not publish `/health`, but its
-        // authentication route is available and returns 405 for a GET.
+        // Keep the authentication probe as a fallback for older deployments
+        // that do not publish `/health`.
         try {
           final response = await _dio.get<Object?>(
             '/auth/login',
-            options: Options(validateStatus: (status) => status != null && status < 500),
+            options: Options(
+              validateStatus: (status) => status != null && status < 500,
+            ),
           );
           if (response.statusCode != null) {
             return DateTime.now().difference(started).inMilliseconds;

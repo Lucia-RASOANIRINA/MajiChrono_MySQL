@@ -246,7 +246,7 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen>
     final title = _isSignUp ? l10n.authSignUpTitle : l10n.authSignInTitle;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           // Le bleu reste réservé à l'en-tête pour garder la saisie lumineuse.
@@ -257,20 +257,16 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen>
             height: 360,
             child: const ColoredBox(color: AppColors.primary),
           ),
-          const Positioned(
-            top: 104,
-            right: -18,
-            child: _EmailBlueAccent(),
-          ),
+          const Positioned(top: 104, right: -18, child: _EmailBlueAccent()),
           Positioned(
             top: 0,
             left: 8,
             child: SafeArea(
               child: IconButton(
                 onPressed: () => context.go(AppRoutes.authChoice),
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back,
-                  color: Colors.white,
+                  color: authSurfaceColor(context),
                   size: 28,
                 ),
                 tooltip: MaterialLocalizations.of(context).backButtonTooltip,
@@ -713,7 +709,6 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen>
                           ),
                         ),
                         const SizedBox(height: AppSpacing.xs),
-
                       ],
                     ),
                   ),

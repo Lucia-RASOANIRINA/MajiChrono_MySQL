@@ -15,6 +15,7 @@ class CenterNotification {
     required this.receivedAt,
     this.route,
     this.read = false,
+    this.archived = false,
   });
 
   final McNotificationChannel channel;
@@ -27,15 +28,18 @@ class CenterNotification {
   final String? route;
 
   final bool read;
+  final bool archived;
 
-  CenterNotification copyWith({bool? read}) => CenterNotification(
-    channel: channel,
-    title: title,
-    body: body,
-    receivedAt: receivedAt,
-    route: route,
-    read: read ?? this.read,
-  );
+  CenterNotification copyWith({bool? read, bool? archived}) =>
+      CenterNotification(
+        channel: channel,
+        title: title,
+        body: body,
+        receivedAt: receivedAt,
+        route: route,
+        read: read ?? this.read,
+        archived: archived ?? this.archived,
+      );
 
   /// Construit une entree du centre a partir d'une notification affichee.
   factory CenterNotification.fromDisplayed(AppNotification notification) =>
@@ -54,6 +58,7 @@ class CenterNotification {
     'route': route,
     'receivedAt': receivedAt.toUtc().toIso8601String(),
     'read': read,
+    'archived': archived,
   };
 
   static CenterNotification? fromJson(Map<String, dynamic> json) {
@@ -75,6 +80,7 @@ class CenterNotification {
           DateTime.tryParse('${json['receivedAt']}')?.toLocal() ??
           DateTime.now(),
       read: json['read'] as bool? ?? false,
+      archived: json['archived'] as bool? ?? false,
     );
   }
 }
