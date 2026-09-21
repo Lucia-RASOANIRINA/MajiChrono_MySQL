@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "943062341891",
+    "project_id": "majichrono-9c736",
+    "storage_bucket": "majichrono-9c736.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:943062341891:android:17e2024be9b4335878b136",
+        "android_client_info": {
+          "package_name": "mg.majichrono"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBfU192dJ45tJU4v4KO4nchr2G1gS8I4cQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

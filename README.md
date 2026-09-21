@@ -190,6 +190,29 @@ Avant publication, exécuter sur un appareil Android physique :
 Chaque scénario doit être contrôlé avec les journaux de synchronisation et
 l'absence de doublons côté serveur.
 
+### Messagerie et push
+
+La messagerie serveur supporte désormais :
+
+- les conversations libres avec l'administration ;
+- la recherche par contenu ;
+- les pièces jointes référencées par le stockage `/media` ;
+- l'archivage, la restauration, le blocage, le déblocage et la suppression
+  synchronisés.
+
+Après déploiement du code Laravel, appliquer la migration avant d'ouvrir ces
+routes :
+
+```text
+php artisan migrate --force
+```
+
+Le push distant Android nécessite encore la configuration opérationnelle FCM :
+`android/app/google-services.json` côté Flutter et un compte de service Firebase
+configuré hors Git côté Laravel. Sans ce compte, l'application conserve le
+transport de notifications locales et l'API ne doit pas être considérée comme
+un push distant actif.
+
 ### Backend Python de référence
 
 Le contrat historique et le backend de simulation sont disponibles sous

@@ -91,6 +91,15 @@ class ApiEndpoints {
   // --- Discussion course (expediteur <-> livreur) ----------------------
   /// Boite de reception : la liste des conversations (espace « Messages »).
   static const String conversations = '/conversations';
+  static const String adminConversation = '/conversations/admin';
+  static const String conversationSearch = '/conversations/search';
+  static String conversationMessages(String id) =>
+      '/conversations/$id/messages';
+  static String conversationArchive(String id) => '/conversations/$id/archive';
+  static String conversationRestore(String id) => '/conversations/$id/restore';
+  static String conversationBlock(String id) => '/conversations/$id/block';
+  static String conversationUnblock(String id) => '/conversations/$id/unblock';
+  static String conversationDelete(String id) => '/conversations/$id';
 
   /// Messages d'une course. S'ouvre a l'acceptation ; seuls l'expediteur et le
   /// livreur assigne y ont acces.
@@ -191,8 +200,7 @@ class ApiEndpoints {
   // --- Administration --------------------------------------------------
   static const String adminDashboard = '/admin/dashboard';
   static const String adminStats = '/admin/stats';
-  static const String adminDeliveriesReport =
-      '/admin/reports/deliveries.csv';
+  static const String adminDeliveriesReport = '/admin/reports/deliveries.csv';
   static const String adminFleet = '/admin/fleet';
   static const String adminKyc = '/admin/kyc';
   static String adminKycReview(String id) => '/admin/kyc/$id/review';
@@ -205,8 +213,7 @@ class ApiEndpoints {
   static const String adminUsers = '/admin/users';
 
   /// Suspension / reactivation d'un compte quelconque (client ou livreur).
-  static String adminUserSuspension(String id) =>
-      '/admin/users/$id/suspension';
+  static String adminUserSuspension(String id) => '/admin/users/$id/suspension';
 
   /// Reaffectation manuelle d'une course (EXI-A07).
   ///
