@@ -13,6 +13,15 @@ return [
     'otp_max_attempts' => (int) env('OTP_MAX_ATTEMPTS', 3),
     'otp_debug_codes' => (bool) env('OTP_DEBUG_CODES', false) && env('APP_ENV', 'production') !== 'production',
 
+    // Passerelle SMS branchee ou non. Tant qu'elle ne l'est pas, l'entree par
+    // numero passe par un mot de passe : un code OTP qui n'arrive jamais
+    // bloquerait l'utilisateur devant un ecran d'attente.
+    'sms_enabled' => (bool) env('SMS_ENABLED', false),
+
+    // Portefeuilles MajiPay de demonstration, credites a la creation. Jamais
+    // en production : ce serait de l'argent offert a chaque nouveau compte.
+    'majipay_sandbox' => (bool) env('MAJIPAY_SANDBOX', false) && env('APP_ENV', 'production') !== 'production',
+
     'mail_from_address' => env('MAIL_FROM_ADDRESS', 'no-reply@majichrono.mg'),
     'mail_from_name' => env('MAIL_FROM_NAME', 'MajiChrono'),
 

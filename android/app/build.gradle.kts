@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// Cle de signature de production, hors depot : android/key.properties
+// (storeFile, storePassword, keyAlias, keyPassword). Voir README, « Publier ».
+val releaseKeys = Properties().apply {
+    val file = rootProject.file("key.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val hasReleaseKey = releaseKeys.getProperty("storeFile") != null
 
 android {
     namespace = "mg.majichrono.majichrono"
@@ -30,14 +40,31 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = rootProject.file(releaseKeys.getProperty("storeFile"))
+                storePassword = releaseKeys.getProperty("storePassword")
+                keyAlias = releaseKeys.getProperty("keyAlias")
+                keyPassword = releaseKeys.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
         }
         release {
-            // TODO(lot 6) : cle de signature de production.
-            signingConfig = signingConfigs.getByName("debug")
+            // Sans key.properties, l'APK de release reste signe avec la cle de
+            // debug : installable pour essai, refuse par le Play Store.
+            signingConfig = if (hasReleaseKey) {
+                signingConfigs.getByName("release")
+            } else {
+                logger.warn("MajiChrono : android/key.properties absent, release signee avec la cle de debug")
+                signingConfigs.getByName("debug")
+            }
             // EXI-SEC09 : obfuscation et minification actives en production.
             isMinifyEnabled = true
             isShrinkResources = true
@@ -65,6 +92,8 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     // Flutter's deferred-component embedding references the Play Core API.
     implementation("com.google.android.play:core:1.10.3")
+    // Themes AppCompat exiges par la fenetre de verrouillage (local_auth).
+    implementation("androidx.appcompat:appcompat:1.7.0")
 }
 
 flutter {

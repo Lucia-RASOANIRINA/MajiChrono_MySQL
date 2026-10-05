@@ -157,7 +157,7 @@ class DisputeController extends Controller
 
     private function isAdmin(Account $account): bool
     {
-        return in_array($account->role, ['admin', 'superadmin'], true);
+        return $account->isAdmin();
     }
 
     private function replay(Request $request, Account $account, string $endpoint)
@@ -167,10 +167,13 @@ class DisputeController extends Controller
             return null;
         }
         $record = IdempotencyRecord::find($key);
+        // Une cle d'idempotence est propre a son compte : la cle d'un autre
+        // (souvent previsible, derivee d'un identifiant de course) ne doit
+        // jamais rejouer sa reponse.
         if ($record === null) {
             return null;
         }
-        if ($record->endpoint !== $endpoint) {
+        if ($record->endpoint !== $endpoint || (string) $record->account_id !== (string) $account->id) {
             throw ApiException::unprocessable('idempotency_key_reused', 'Cle deja utilisee ailleurs');
         }
 

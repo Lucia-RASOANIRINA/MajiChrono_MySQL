@@ -160,6 +160,8 @@ class DeliveryRepositoryImpl implements DeliveryRepository {
       payer: draft.payer,
       shopping: draft.shopping,
       relayPointId: draft.relayPointId,
+      vehicle: draft.vehicle,
+      priceAriary: draft.priceAriary,
     );
 
     await _local.upsertDelivery(local, pendingSync: true);

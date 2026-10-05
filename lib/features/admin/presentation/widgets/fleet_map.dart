@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import 'package:majichrono/core/map/map_attribution.dart';
 import 'package:majichrono/shared/widgets/mc_loader.dart';
 import 'package:majichrono/core/map/tile_source.dart';
 import 'package:majichrono/app/theme/app_colors.dart';
@@ -106,6 +107,7 @@ class FleetMap extends ConsumerWidget {
                 // degrade, les reperes restent lisibles.
                 errorImage: null,
               ),
+              const MapAttribution(),
               MarkerLayer(
                 markers: [
                   for (final driver in located)

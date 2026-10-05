@@ -3,6 +3,8 @@
     <!-- Socle : etat reseau reel pour la sonde applicative (§9.2). -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- Entree sans SMS : verrouillage du telephone (empreinte, visage, code). -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
 
     <!-- Notifications (EXI-N01). Demandee a l'execution sur Android 13+. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>

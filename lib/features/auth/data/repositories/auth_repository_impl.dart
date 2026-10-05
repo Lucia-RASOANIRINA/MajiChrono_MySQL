@@ -48,10 +48,12 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<PhoneLoginResult> loginWithPhone({
     required MalagasyPhone phone,
     String? password,
+    String? deviceSecret,
   }) async {
     final json = await _remote.phoneLogin(
       phone: phone.e164,
       password: password,
+      deviceSecret: deviceSecret,
     );
     if (json['challengeId'] != null) {
       return PhoneOtpRequired(
@@ -72,6 +74,33 @@ class AuthRepositoryImpl implements AuthRepository {
       OtpVerification(session: session, account: _accountFrom(accountJson)),
     );
   }
+
+  @override
+  Future<OtpVerification> registerWithPhone({
+    required MalagasyPhone phone,
+    String? password,
+    String? deviceSecret,
+    String? fullName,
+  }) async {
+    final json = await _remote.phoneRegister(
+      phone: phone.e164,
+      password: password,
+      deviceSecret: deviceSecret,
+      fullName: fullName,
+    );
+    final session = _sessionFrom(json['session'] as Map<String, dynamic>);
+    await _persist(session);
+    final accountJson = json['account'] as Map<String, dynamic>;
+    await _local.saveAccount(accountJson);
+    return OtpVerification(
+      session: session,
+      account: _accountFrom(accountJson),
+    );
+  }
+
+  @override
+  Future<void> enrollDevice(String deviceSecret) =>
+      _remote.enrollDevice(deviceSecret);
 
   @override
   Future<OtpVerification> verifyOtp({
@@ -128,7 +157,10 @@ class AuthRepositoryImpl implements AuthRepository {
     final accountJson = json['account'] as Map<String, dynamic>;
     await _local.saveAccount(accountJson);
 
-    return OtpVerification(session: session, account: _accountFrom(accountJson));
+    return OtpVerification(
+      session: session,
+      account: _accountFrom(accountJson),
+    );
   }
 
   @override

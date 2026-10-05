@@ -19,7 +19,7 @@ class AdminController extends Controller
     private function admin(Request $request)
     {
         $account = CurrentAccount::resolve($request);
-        if ($account->role !== 'admin') {
+        if (! $account->isAdmin()) {
             throw ApiException::forbidden('admin_required', "Accès réservé à l'administration");
         }
 
@@ -154,7 +154,7 @@ class AdminController extends Controller
     {
         $admin = $this->admin($request);
         $user = Account::find($accountId);
-        if ($user === null || $user->role === 'admin' || (string) $user->id === (string) $admin->id) {
+        if ($user === null || $user->isAdmin() || (string) $user->id === (string) $admin->id) {
             throw ApiException::notFound('Compte inconnu');
         }
 

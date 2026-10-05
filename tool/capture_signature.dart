@@ -26,15 +26,16 @@ void _noop(VectorSignature? _) {}
 /// Charge Roboto depuis le cache du SDK : sans cela, `flutter test` rend le
 /// texte en paves (police de substitution), et la capture serait illisible.
 Future<void> _loadRoboto() async {
-  const dir =
-      r'C:\src\flutter\bin\cache\artifacts\material_fonts';
+  const dir = r'C:\src\flutter\bin\cache\artifacts\material_fonts';
   final loader = FontLoader('Roboto');
-  for (final name in ['roboto-regular.ttf', 'roboto-medium.ttf', 'roboto-bold.ttf']) {
+  for (final name in [
+    'roboto-regular.ttf',
+    'roboto-medium.ttf',
+    'roboto-bold.ttf',
+  ]) {
     final file = File('$dir\\$name');
     if (file.existsSync()) {
-      loader.addFont(
-        Future.value(file.readAsBytesSync().buffer.asByteData()),
-      );
+      loader.addFont(Future.value(file.readAsBytesSync().buffer.asByteData()));
     }
   }
   await loader.load();
@@ -65,7 +66,10 @@ Future<void> main() async {
             backgroundColor: const Color(0xFFF1F5F9),
             title: const Text(
               'Preuve de remise',
-              style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.w700),
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           body: Center(
@@ -132,11 +136,13 @@ Future<void> main() async {
     await tester.pumpAndSettle();
 
     final boundary =
-        boundaryKey.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+        boundaryKey.currentContext!.findRenderObject()!
+            as RenderRepaintBoundary;
     await tester.runAsync(() async {
       final image = await boundary.toImage(pixelRatio: 2.5);
       final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-      final path = r'D:\gtmp\claude\D--MajiChrono\0fe45000-41da-4758-932e-b133449d15c5\scratchpad\signature.png';
+      final path =
+          '${Directory.systemTemp.path}${Platform.pathSeparator}signature.png';
       File(path).writeAsBytesSync(bytes!.buffer.asUint8List());
       // ignore: avoid_print
       print('SIGNATURE CAPTURE -> $path');

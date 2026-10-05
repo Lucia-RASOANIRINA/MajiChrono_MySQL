@@ -1,7 +1,7 @@
 package mg.majichrono.majichrono
 
 import android.view.WindowManager
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
@@ -12,8 +12,12 @@ import io.flutter.plugin.common.MethodChannel
  * (EXI-SEC06). Tout le reste passe par des plugins existants — un canal
  * maison est une surface a maintenir a chaque version d'Android, et on n'en
  * ouvre un que lorsqu'aucun plugin ne fait l'affaire.
+ *
+ * `FlutterFragmentActivity` (et non `FlutterActivity`) : la fenetre de
+ * verrouillage du telephone — code, schema, empreinte, visage — utilisee pour
+ * entrer sans SMS exige une `FragmentActivity`.
  */
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterFragmentActivity() {
 
     private companion object {
         const val CHANNEL = "mg.majichrono/secure"

@@ -122,9 +122,10 @@ class DeliveryMockModule extends MockModule {
 
     // Frais retenus seulement si un livreur etait deja engage (course acceptee).
     final fee = status == DeliveryStatus.accepted
-        ? (((delivery['price'] as num?)?.toInt() ?? 5000) * 0.20)
-              .round()
-              .clamp(1000, 1 << 30)
+        ? (((delivery['price'] as num?)?.toInt() ?? 5000) * 0.20).round().clamp(
+            1000,
+            1 << 30,
+          )
         : 0;
 
     delivery['status'] = DeliveryStatus.cancelled.wireName;
@@ -196,7 +197,19 @@ class DeliveryMockModule extends MockModule {
 
   int _mediaSeq = 0;
 
-  // PNG 1x1 : le simulateur ne conserve pas l'image, il en rend une valide.
+  /// Images deposees, conservees en memoire : la photo prise par
+  /// l'expediteur est bien celle que le livreur voit ensuite.
+  final Map<String, (List<int>, String)> _media = {};
+
+  /// Range une image (photo d'expediteur, ou photo de demonstration) et rend
+  /// son identifiant.
+  String putMedia(List<int> bytes, {String contentType = 'image/jpeg'}) {
+    final id = 'med_${_mediaSeq++}';
+    _media[id] = (bytes, contentType);
+    return id;
+  }
+
+  // PNG 1x1, rendu pour un identifiant inconnu.
   static const String _placeholderPng =
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk'
       'YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
@@ -205,18 +218,29 @@ class DeliveryMockModule extends MockModule {
     MockRequest req,
     Map<String, String> _,
   ) async {
-    final id = 'med_${_mediaSeq++}';
+    final encoded = req.json['imageBase64'] as String?;
+    final id = encoded == null
+        ? 'med_${_mediaSeq++}'
+        : putMedia(
+            base64Decode(encoded),
+            contentType: '${req.json['contentType'] ?? 'image/jpeg'}',
+          );
     return MockResponse.created({'id': id, 'url': '/media/$id'});
   }
 
-  Future<MockResponse> _mediaGet(MockRequest req, Map<String, String> _) async =>
-      MockResponse(
-        200,
-        base64Decode(_placeholderPng),
-        headers: const {
-          'content-type': ['image/png'],
-        },
-      );
+  Future<MockResponse> _mediaGet(
+    MockRequest req,
+    Map<String, String> params,
+  ) async {
+    final stored = _media[params['id']];
+    return MockResponse(
+      200,
+      stored?.$1 ?? base64Decode(_placeholderPng),
+      headers: {
+        'content-type': [stored?.$2 ?? 'image/png'],
+      },
+    );
+  }
 
   /// Reproduit la grille provisoire pour que le prix serveur et le prix local
   /// coincident tant que DO-3 n'est pas arbitre.

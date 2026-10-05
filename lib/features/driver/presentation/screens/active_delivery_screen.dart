@@ -20,6 +20,7 @@ import 'package:majichrono/features/delivery/domain/entities/delivery.dart';
 import 'package:majichrono/features/delivery/presentation/providers/delivery_providers.dart';
 import 'package:majichrono/features/delivery/presentation/screens/deliveries_screen.dart';
 import 'package:majichrono/features/driver/domain/entities/driver_entities.dart';
+import 'package:majichrono/features/delivery/presentation/widgets/package_photo.dart';
 import 'package:majichrono/features/driver/presentation/providers/driver_providers.dart';
 import 'package:majichrono/features/driver/presentation/screens/grouped_route_screen.dart';
 import 'package:majichrono/features/driver/presentation/widgets/emergency_button.dart';
@@ -210,6 +211,10 @@ class _ActiveDeliveryScreenState extends ConsumerState<ActiveDeliveryScreen> {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
+          // Le colis a retirer, en grand : c'est lui que le livreur cherche
+          // du regard en arrivant chez l'expediteur. Un toucher l'agrandit.
+          PackagePhoto(delivery: delivery, height: 200),
+          const SizedBox(height: AppSpacing.md),
           Card(
             child: Padding(
               padding: AppSpacing.card,

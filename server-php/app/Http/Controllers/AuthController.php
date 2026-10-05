@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\ApiException;
 use App\Models\Account;
 use App\Models\Challenge;
+use App\Models\DeviceCredential;
 use App\Models\RefreshToken;
 use App\Support\CurrentAccount;
 use App\Support\MailSender;
@@ -13,6 +14,7 @@ use App\Support\SmsSender;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Throwable;
 
 /**
@@ -24,6 +26,9 @@ use Throwable;
 class AuthController extends Controller
 {
     private const PHONE_PATTERN = '/^\+261(32|33|34|37|38|39|20)\d{7}$/';
+
+    /** Longueur minimale d'une cle d'appareil (32 octets en base64url). */
+    private const MIN_DEVICE_SECRET = 40;
 
     private const EMAIL_PATTERN = '/^[^@\s]+@[^@\s.]+\.[^@\s]+$/';
 
@@ -88,20 +93,51 @@ class AuthController extends Controller
         }
 
         $account = Account::where('phone', $phone)->first();
-        if ($account !== null && filled($account->password_hash)) {
-            $password = $request->input('password');
-            if (! $password) {
-                throw ApiException::conflict('password_required', 'Ce compte utilise un mot de passe');
+
+        // Cle d'appareil : le telephone deverrouille par son proprietaire
+        // presente le secret cree a l'inscription. Ni SMS ni mot de passe.
+        $deviceSecret = (string) $request->input('deviceSecret', '');
+        if ($deviceSecret !== '') {
+            if ($account === null) {
+                throw new ApiException(404, 'phone_not_registered', 'Aucun compte pour ce numero');
             }
-            if (! Security::verifySecret($account->password_hash, $password)) {
-                throw ApiException::unauthorized('Numero de telephone ou mot de passe incorrect');
+            $credential = DeviceCredential::match($account, $deviceSecret);
+            if ($credential === null) {
+                throw new ApiException(401, 'device_not_recognized', 'Ce telephone n\'est pas reconnu pour ce compte');
             }
+            $credential->last_used_at = Carbon::now();
+            $credential->save();
 
             return response()->json([
                 'linked' => true,
                 'session' => $this->issueSession($account, deviceLabel: $request->header('X-Device')),
                 'account' => $account->toMobileJson(),
             ]);
+        }
+
+        if ($account !== null && filled($account->password_hash)) {
+            $password = $request->input('password');
+            if (! $password) {
+                throw ApiException::conflict('password_required', 'Ce compte utilise un mot de passe');
+            }
+            $this->checkPassword($account, (string) $password, 'phone:'.$phone,
+                'Numero de telephone ou mot de passe incorrect');
+
+            return response()->json([
+                'linked' => true,
+                'session' => $this->issueSession($account, deviceLabel: $request->header('X-Device')),
+                'account' => $account->toMobileJson(),
+            ]);
+        }
+
+        if (! config('majichrono.sms_enabled')) {
+            // Sans passerelle SMS, seul le mot de passe ouvre une session :
+            // on dit precisement pourquoi l'entree echoue au lieu d'envoyer
+            // un code qui n'arrivera pas.
+            if ($account === null) {
+                throw new ApiException(404, 'phone_not_registered', 'Aucun compte pour ce numero');
+            }
+            throw ApiException::conflict('password_not_set', 'Ce compte n\'a pas encore de mot de passe');
         }
 
         [$challenge, $code] = $this->openChallenge('sms', $phone);
@@ -115,6 +151,80 @@ class AuthController extends Controller
         }
 
         return response()->json($this->challengeResponse($challenge, $code));
+    }
+
+    /**
+     * Inscription directe par numero et mot de passe.
+     *
+     * C'est l'entree qui rend le numero utilisable sans passerelle SMS : le
+     * compte nait avec son mot de passe et une session s'ouvre aussitot. Le
+     * numero reste non verifie (`phone_verified_at` nul) jusqu'a ce qu'un code
+     * SMS le confirme, le jour ou la passerelle sera branchee.
+     *
+     * Un numero deja connu est refuse, y compris s'il n'a pas de mot de passe :
+     * poser un mot de passe sur un compte existant sans preuve de possession
+     * de la ligne reviendrait a en offrir la cle au premier venu.
+     */
+    public function phoneRegister(Request $request)
+    {
+        $phone = (string) $request->input('phone');
+        $password = (string) $request->input('password', '');
+        $deviceSecret = (string) $request->input('deviceSecret', '');
+        $fullName = trim((string) $request->input('fullName', ''));
+
+        if (! preg_match(self::PHONE_PATTERN, $phone)) {
+            throw ApiException::unprocessable('invalid_phone', 'Numero de telephone malgache invalide', [
+                'fields' => ['phone' => 'format_invalide'],
+            ]);
+        }
+        // Il faut une preuve pour revenir : la cle de ce telephone, un mot de
+        // passe de secours, ou les deux.
+        if ($deviceSecret === '' && $password === '') {
+            throw ApiException::unprocessable('credential_required', 'Cle d\'appareil ou mot de passe requis');
+        }
+        if ($deviceSecret !== '' && mb_strlen($deviceSecret) < self::MIN_DEVICE_SECRET) {
+            throw ApiException::unprocessable('weak_device_secret', 'Cle d\'appareil trop courte');
+        }
+        if ($password !== '' && mb_strlen($password) < 8) {
+            throw ApiException::unprocessable('weak_password', 'Mot de passe trop court', [
+                'minLength' => 8,
+            ]);
+        }
+        if (Account::where('phone', $phone)->exists()) {
+            throw ApiException::conflict('phone_taken', 'Ce numero a deja un compte');
+        }
+
+        $account = Account::create([
+            'phone' => $phone,
+            'full_name' => mb_substr($fullName, 0, 120),
+            'password_hash' => $password === '' ? '' : Security::hashSecret($password),
+        ]);
+        if ($deviceSecret !== '') {
+            DeviceCredential::enroll($account, $deviceSecret, $request->header('X-Device'));
+        }
+
+        return response()->json([
+            'linked' => true,
+            'session' => $this->issueSession($account, deviceLabel: $request->header('X-Device')),
+            'account' => $account->toMobileJson(),
+        ], 201);
+    }
+
+    /**
+     * Lie le telephone courant au compte de la session : apres une entree par
+     * mot de passe ou par e-mail sur un nouvel appareil, la prochaine connexion
+     * se fera par le verrouillage de ce telephone.
+     */
+    public function enrollDevice(Request $request)
+    {
+        $account = CurrentAccount::resolve($request);
+        $deviceSecret = (string) $request->input('deviceSecret', '');
+        if (mb_strlen($deviceSecret) < self::MIN_DEVICE_SECRET) {
+            throw ApiException::unprocessable('weak_device_secret', 'Cle d\'appareil trop courte');
+        }
+        DeviceCredential::enroll($account, $deviceSecret, $request->header('X-Device'));
+
+        return response()->noContent();
     }
 
     // --- Adresse e-mail --------------------------------------------------
@@ -217,10 +327,7 @@ class AuthController extends Controller
         $email = mb_strtolower(trim((string) $request->input('email')));
         $password = (string) $request->input('password');
         $account = Account::where('email', $email)->first();
-
-        if ($account === null || ! Security::verifySecret($account->password_hash, $password)) {
-            throw ApiException::unauthorized('E-mail ou mot de passe incorrect');
-        }
+        $this->checkPassword($account, $password, 'email:'.$email, 'E-mail ou mot de passe incorrect');
 
         return response()->json([
             'linked' => true,
@@ -266,13 +373,26 @@ class AuthController extends Controller
                 'minLength' => 8,
             ]);
         }
-        if (filled($account->password_hash)
-            && ! Security::verifySecret($account->password_hash, (string) $request->input('currentPassword'))) {
-            throw ApiException::forbidden('wrong_current_password', 'Mot de passe actuel incorrect');
+        if (filled($account->password_hash)) {
+            $key = 'change:'.$account->id;
+            $this->guardLockout($key);
+            if (! Security::verifySecret($account->password_hash, (string) $request->input('currentPassword'))) {
+                RateLimiter::hit($this->lockoutKey($key), self::LOCKOUT_SECONDS);
+                throw ApiException::forbidden('wrong_current_password', 'Mot de passe actuel incorrect');
+            }
+            RateLimiter::clear($this->lockoutKey($key));
         }
 
         $account->password_hash = Security::hashSecret($newPassword);
         $account->save();
+
+        // Nouveau mot de passe : les autres appareils doivent se reconnecter.
+        // La session courante (sa famille de jetons) reste ouverte.
+        $claims = Security::readAccessToken(trim(substr((string) $request->header('Authorization'), 7)));
+        RefreshToken::where('account_id', $account->id)
+            ->whereNull('revoked_at')
+            ->where('family', '!=', (string) ($claims['fam'] ?? ''))
+            ->update(['revoked_at' => Carbon::now()]);
 
         return response()->noContent();
     }
@@ -295,6 +415,18 @@ class AuthController extends Controller
         if ($account !== null) {
             $account->password_hash = Security::hashSecret($newPassword);
             $account->save();
+
+            // Reinitialisation = le compte a peut-etre ete pris. Toutes les
+            // sessions et tous les telephones lies sont revoques ; le
+            // proprietaire relie le sien a sa prochaine connexion.
+            RefreshToken::where('account_id', $account->id)->whereNull('revoked_at')
+                ->update(['revoked_at' => Carbon::now()]);
+            DeviceCredential::where('account_id', $account->id)->whereNull('revoked_at')
+                ->update(['revoked_at' => Carbon::now()]);
+            RateLimiter::clear($this->lockoutKey('email:'.$account->email));
+            if (filled($account->phone)) {
+                RateLimiter::clear($this->lockoutKey('phone:'.$account->phone));
+            }
         }
 
         return response()->noContent();
@@ -467,6 +599,44 @@ class AuthController extends Controller
     }
 
     // --- Aides internes ------------------------------------------------
+
+    /** Echecs de mot de passe toleres avant blocage temporaire de l'identifiant. */
+    private const MAX_PASSWORD_FAILURES = 5;
+
+    private const LOCKOUT_SECONDS = 900;
+
+    private function lockoutKey(string $identifier): string
+    {
+        return 'pwd-fail:'.mb_strtolower($identifier);
+    }
+
+    /**
+     * Refuse d'essayer un mot de passe de plus apres trop d'echecs sur ce meme
+     * identifiant, quelle que soit l'IP : c'est l'identifiant qu'on protege.
+     */
+    private function guardLockout(string $identifier): void
+    {
+        $key = $this->lockoutKey($identifier);
+        if (RateLimiter::tooManyAttempts($key, self::MAX_PASSWORD_FAILURES)) {
+            throw new ApiException(429, 'too_many_attempts', 'Trop d\'essais. Reessayez dans quelques minutes', [
+                'retryAfterSeconds' => RateLimiter::availableIn($key),
+            ]);
+        }
+    }
+
+    /**
+     * Verifie un mot de passe en comptant les echecs. Un compte inconnu compte
+     * comme un echec : la reponse ne doit pas dire si l'identifiant existe.
+     */
+    private function checkPassword(?Account $account, string $password, string $identifier, string $message): void
+    {
+        $this->guardLockout($identifier);
+        if ($account === null || ! Security::verifySecret($account->password_hash, $password)) {
+            RateLimiter::hit($this->lockoutKey($identifier), self::LOCKOUT_SECONDS);
+            throw ApiException::unauthorized($message);
+        }
+        RateLimiter::clear($this->lockoutKey($identifier));
+    }
 
     private function openChallenge(string $channel, string $destination): array
     {

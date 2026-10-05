@@ -89,6 +89,9 @@ class Account extends Model
             // mobile, comme le ferait une vraie absence de valeur.
             'phone' => filled($this->phone) ? $this->phone : null,
             'email' => filled($this->email) ? $this->email : null,
+            // Un numero inscrit sans SMS n'est pas prouve : l'exploitation et
+            // l'autre partie doivent pouvoir le savoir.
+            'phoneVerified' => $this->phone_verified_at !== null,
             'role' => $this->hasUnselectedMobileProfile() ? null : $this->role,
             'firstName' => $this->first_name,
             'lastName' => $this->last_name,
@@ -98,6 +101,14 @@ class Account extends Model
             'kycStatus' => $this->kyc_status,
             'createdAt' => optional($this->created_at)->toIso8601String(),
         ];
+    }
+
+    /** Roles de l'exploitation : `superadmin` a tous les droits d'`admin`. */
+    public const ADMIN_ROLES = ['admin', 'superadmin'];
+
+    public function isAdmin(): bool
+    {
+        return in_array($this->role, self::ADMIN_ROLES, true);
     }
 
     public function hasUnselectedMobileProfile(): bool

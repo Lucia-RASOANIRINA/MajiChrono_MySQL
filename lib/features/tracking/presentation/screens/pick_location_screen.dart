@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import 'package:majichrono/core/map/map_attribution.dart';
 import 'package:majichrono/shared/widgets/mc_loader.dart';
 import 'package:majichrono/app/theme/app_colors.dart';
 import 'package:majichrono/app/theme/design_tokens.dart';
@@ -80,6 +81,7 @@ class _PickLocationScreenState extends ConsumerState<PickLocationScreen> {
                         tileProvider: tileProvider,
                         userAgentPackageName: 'mg.majichrono',
                       ),
+                      const MapAttribution(),
                     ],
                   ),
                 ),

@@ -3,12 +3,13 @@ import 'dart:math';
 import 'package:majichrono/core/network/api_endpoints.dart';
 import 'package:majichrono/core/network/mock/mock_backend.dart';
 import 'package:majichrono/features/delivery/domain/entities/delivery.dart';
-import 'package:majichrono/features/delivery/domain/entities/price_estimate.dart';
+import 'package:majichrono/features/delivery/data/mock/package_photo_generator.dart';
+import 'package:majichrono/features/delivery/domain/entities/delivery_vehicle.dart';
 import 'package:majichrono/features/delivery/domain/value_objects/geo_point.dart';
 
 /// Routes simulees du parcours livreur (§12.2).
 ///
-/// Le simulateur fabrique des courses disponibles autour d'Antananarivo, gere
+/// Le simulateur fabrique des courses disponibles autour de Majunga, gere
 /// l'acceptation et valide les transitions de statut **cote serveur**, comme le
 /// fait le vrai backend (EXI-B02). C'est important : si le simulateur acceptait
 /// toutes les transitions, l'application donnerait l'illusion de fonctionner et
@@ -16,6 +17,7 @@ import 'package:majichrono/features/delivery/domain/value_objects/geo_point.dart
 class DriverMockModule extends MockModule {
   DriverMockModule({
     required this.deliveries,
+    this.putMedia,
     Random? random,
     String kycStatus = 'draft',
   }) : _random = random ?? Random(),
@@ -23,6 +25,14 @@ class DriverMockModule extends MockModule {
        _initialKyc = kycStatus;
 
   final Map<String, Map<String, dynamic>> Function() deliveries;
+
+  /// Depot d'images du simulateur : les courses de demonstration recoivent
+  /// une photo de colis, comme une vraie course photographiee par
+  /// l'expediteur. Absent (tests), elles n'en ont pas.
+  final String Function(List<int> bytes)? putMedia;
+  late final PackagePhotoGenerator _photos = PackagePhotoGenerator(
+    random: _random,
+  );
   final Random _random;
 
   /// Courses proposees, generees une fois puis stables tant qu'elles ne sont
@@ -34,14 +44,14 @@ class DriverMockModule extends MockModule {
   /// pas arbitree, et elle determine ce que le livreur voit comme gain.
   static const double platformCommission = 0.20;
 
-  /// Quartiers d'Antananarivo utilises pour fabriquer des courses credibles.
+  /// Quartiers de Majunga utilises pour fabriquer des courses credibles.
   static const List<(String, String, double, double)> _places = [
-    ('Ambohipo', 'Apres l epicerie Tsiky, portail vert', -18.9010, 47.5490),
-    ('Analakely', 'Face a l escalier, boutique bleue', -18.9100, 47.5250),
-    ('Ivandry', 'Derriere la station, mur blanc', -18.8680, 47.5320),
-    ('Ankorondrano', 'A cote du grand magasin', -18.8790, 47.5230),
-    ('Andraharo', 'Immeuble jaune, 2e portail', -18.8850, 47.5140),
-    ('Ambohimanarina', 'Apres le marche, ruelle a droite', -18.8600, 47.4980),
+    ('Mahabibo', 'Pres du marche Morafeno, porte verte', -15.7164, 46.3214),
+    ('Mahajanga Be', 'Bazary Be, entree Avenue Barday', -15.7234, 46.3109),
+    ('Tsaramandroso', 'Apres l epicerie, maison jaune', -15.7108, 46.3170),
+    ('Mahajanga Be', 'Face au port, immeuble blanc', -15.7260, 46.3090),
+    ('Ambovoalanana', 'Derriere l ecole, portail bleu', -15.7192, 46.3187),
+    ('Androva', 'Entree du CHU', -15.7170, 46.3053),
   ];
 
   @override
@@ -102,7 +112,8 @@ class DriverMockModule extends MockModule {
     _kycThread.add({
       'id': 'kmsg_${++_kycMsgSeq}',
       'fromAdmin': true,
-      'body': 'Bonjour, votre dossier est en cours d\'examen. '
+      'body':
+          'Bonjour, votre dossier est en cours d\'examen. '
           'Nous revenons vers vous sous 48 h.',
       'createdAt': now
           .add(const Duration(seconds: 1))
@@ -120,6 +131,7 @@ class DriverMockModule extends MockModule {
     'bicycle',
     'car',
     'tricycle',
+    'van',
   };
 
   Future<MockResponse> _vehicleRead(
@@ -181,25 +193,35 @@ class DriverMockModule extends MockModule {
     final lng = double.tryParse(req.query['lng'] ?? '');
     final driver = lat != null && lng != null
         ? GeoPoint(lat, lng)
-        : GeoPoint.antananarivo;
+        : GeoPoint.mahajanga;
 
+    final mine = _vehicle?['type'] as String?;
     final items =
-        _offers.values.map((delivery) {
-          final pickup = GeoPoint.fromJson(
-            (delivery['pickup'] as Map<String, dynamic>)['point']
-                as Map<String, dynamic>?,
-          )!;
-          final price = (delivery['price'] as num?)?.toInt() ?? 0;
-          return {
-            'delivery': delivery,
-            'pickupDistanceKm': driver.distanceKmTo(pickup),
-            'estimatedEarning': (price * (1 - platformCommission)).round(),
-          };
-        }).toList()..sort(
-          (a, b) => (a['pickupDistanceKm']! as double).compareTo(
-            b['pickupDistanceKm']! as double,
-          ),
-        );
+        _offers.values
+            .where(
+              (delivery) =>
+                  mine == null ||
+                  delivery['vehicle'] == null ||
+                  delivery['vehicle'] == mine,
+            )
+            .map((delivery) {
+              final pickup = GeoPoint.fromJson(
+                (delivery['pickup'] as Map<String, dynamic>)['point']
+                    as Map<String, dynamic>?,
+              )!;
+              final price = (delivery['price'] as num?)?.toInt() ?? 0;
+              return {
+                'delivery': delivery,
+                'pickupDistanceKm': driver.distanceKmTo(pickup),
+                'estimatedEarning': (price * (1 - platformCommission)).round(),
+              };
+            })
+            .toList()
+          ..sort(
+            (a, b) => (a['pickupDistanceKm']! as double).compareTo(
+              b['pickupDistanceKm']! as double,
+            ),
+          );
 
     return MockResponse.ok({'items': items});
   }
@@ -218,7 +240,8 @@ class DriverMockModule extends MockModule {
       final kind =
           DeliveryKind.values[_random.nextInt(DeliveryKind.values.length - 1)];
 
-      final estimate = TariffGrid.provisional.estimate(
+      final vehicle = DeliveryVehicle.suggestedFor(weight);
+      final estimate = vehicle.tariff.estimate(
         straightLineKm: GeoPoint(
           from.$3,
           from.$4,
@@ -234,10 +257,14 @@ class DriverMockModule extends MockModule {
         'kind': kind.wireName,
         'pickup': _address(from),
         'dropoff': _address(to),
-        'package': {'weight': weight.wireName},
+        'package': {
+          'weight': weight.wireName,
+          if (putMedia != null) 'photoId': putMedia!(_photos.render(kind)),
+        },
         'slot': {'immediate': true},
         'paymentMethod': PaymentMethod.cash.wireName,
         'createdAt': DateTime.now().toUtc().toIso8601String(),
+        'vehicle': vehicle.wireName,
         'price': estimate.totalAriary,
         'trackingToken': 'trk_${_random.nextInt(1 << 32)}',
       };

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:majichrono/app/router/app_routes.dart';
 import 'package:majichrono/app/theme/app_colors.dart';
+import 'package:majichrono/features/delivery/presentation/widgets/package_photo.dart';
 import 'package:majichrono/app/theme/design_tokens.dart';
 import 'package:majichrono/features/delivery/domain/entities/delivery.dart';
 import 'package:majichrono/features/delivery/domain/entities/price_estimate.dart';
@@ -92,7 +93,10 @@ class _Empty extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text(l10n.driverDeliveriesEmpty, style: theme.textTheme.titleMedium),
+            Text(
+              l10n.driverDeliveriesEmpty,
+              style: theme.textTheme.titleMedium,
+            ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               l10n.driverDeliveriesEmptyNote,
@@ -144,9 +148,34 @@ class _DeliveryTile extends StatelessWidget {
         onTap: active
             ? () => context.push(AppRoutes.driverActive(delivery.id))
             : null,
-        leading: Icon(
-          active ? Icons.local_shipping_outlined : Icons.check_circle_outline,
-          color: active ? theme.colorScheme.primary : AppColors.success,
+        // Vignette du colis : on retrouve une course a son colis plus vite
+        // qu'a son adresse. Une course terminee porte une coche verte.
+        leading: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            PackagePhoto(
+              delivery: delivery,
+              width: 56,
+              height: 56,
+              compact: true,
+              zoomable: false,
+              borderRadius: const BorderRadius.all(Radius.circular(14)),
+            ),
+            if (!active)
+              const Positioned(
+                right: -4,
+                bottom: -4,
+                child: CircleAvatar(
+                  radius: 11,
+                  backgroundColor: Colors.white,
+                  child: Icon(
+                    Icons.check_circle,
+                    size: 20,
+                    color: AppColors.success,
+                  ),
+                ),
+              ),
+          ],
         ),
         title: Text(
           delivery.dropoff.summary,

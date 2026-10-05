@@ -25,7 +25,8 @@ class FakeSecureStore implements SecureStore {
   Future<void> delete(String key) async => _values.remove(key);
 
   @override
-  Future<void> wipe() async => _values.clear();
+  Future<void> wipe() async =>
+      _values.removeWhere((k, _) => !k.startsWith(SecureStore.deviceKeyPrefix));
 
   bool get isEmpty => _values.isEmpty;
 

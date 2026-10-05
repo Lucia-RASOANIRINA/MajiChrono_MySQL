@@ -60,6 +60,16 @@ class AuthMockModule extends MockModule {
     for (final email in seededEmails.keys) email: seededPassword,
   };
 
+  /// Mots de passe des comptes ouverts par numero, cle `+261...`. Les comptes
+  /// de demonstration partagent [seededPassword].
+  final Map<String, String> _phonePasswords = {
+    for (final phone in seededAccounts.keys) phone: seededPassword,
+  };
+
+  /// Cles d'appareil liees a chaque numero (entree par le verrouillage du
+  /// telephone, sans SMS).
+  final Map<String, Set<String>> _deviceKeys = {};
+
   static const Duration otpValidity = Duration(minutes: 5);
   static const int maxAttempts = 3;
   static const Duration accessTtl = Duration(minutes: 15);
@@ -100,6 +110,9 @@ class AuthMockModule extends MockModule {
     backend.post(ApiEndpoints.emailRegister, _registerWithEmail);
     backend.post(ApiEndpoints.emailLink, _linkEmail);
     backend.post(ApiEndpoints.otpRequest, _requestOtp);
+    backend.post(ApiEndpoints.phoneLogin, _phoneLogin);
+    backend.post(ApiEndpoints.phoneRegister, _phoneRegister);
+    backend.post(ApiEndpoints.authDevices, _enrollDevice);
     backend.post(ApiEndpoints.otpVerify, _verifyOtp);
     backend.post(ApiEndpoints.refresh, _refresh);
     backend.post(ApiEndpoints.logout, _logout);
@@ -122,6 +135,12 @@ class AuthMockModule extends MockModule {
     _challenges.clear();
     _emailChallenges.clear();
     _sessions.clear();
+    _deviceKeys.clear();
+    _phonePasswords
+      ..clear()
+      ..addAll({
+        for (final phone in seededAccounts.keys) phone: seededPassword,
+      });
     _emailLinks
       ..clear()
       ..addAll(seededEmails);
@@ -153,6 +172,142 @@ class AuthMockModule extends MockModule {
     return _sessionForEmail(email, deviceLabel: _deviceOf(req));
   }
 
+  // --- POST /auth/phone/login ------------------------------------------
+
+  /// Entree par numero et mot de passe, comme le serveur Laravel tant que la
+  /// passerelle SMS n'est pas branchee.
+  Future<MockResponse> _phoneLogin(
+    MockRequest req,
+    Map<String, String> _,
+  ) async {
+    final phone = req.json['phone'] as String?;
+    final password = req.json['password'] as String?;
+    final deviceSecret = req.json['deviceSecret'] as String?;
+    if (phone == null || !_phonePattern.hasMatch(phone)) {
+      return MockResponse.error(422, 'invalid_phone', 'Numero invalide');
+    }
+    final known =
+        _phonePasswords.containsKey(phone) || _deviceKeys.containsKey(phone);
+    if (!known) {
+      return MockResponse.error(
+        404,
+        'phone_not_registered',
+        'Aucun compte pour ce numero',
+      );
+    }
+    // Cle d'appareil : le telephone deverrouille presente son secret.
+    if (deviceSecret != null && deviceSecret.isNotEmpty) {
+      if (!(_deviceKeys[phone]?.contains(deviceSecret) ?? false)) {
+        return MockResponse.error(
+          401,
+          'device_not_recognized',
+          'Ce telephone n est pas reconnu pour ce compte',
+        );
+      }
+      return _phoneSession(phone, req);
+    }
+    final expected = _phonePasswords[phone];
+    if (expected == null) {
+      return MockResponse.error(
+        409,
+        'password_not_set',
+        'Ce compte n a pas encore de mot de passe',
+      );
+    }
+    if (password == null || password.isEmpty) {
+      return MockResponse.error(
+        409,
+        'password_required',
+        'Ce compte utilise un mot de passe',
+      );
+    }
+    if (password != expected) {
+      return MockResponse.error(
+        401,
+        'bad_credentials',
+        'Numero de telephone ou mot de passe incorrect',
+      );
+    }
+    return _phoneSession(phone, req);
+  }
+
+  MockResponse _phoneSession(String phone, MockRequest req, {int? status}) {
+    final account = _accountFor(phone);
+    final body = {
+      'linked': true,
+      'session': _issueSession(account, deviceLabel: _deviceOf(req)),
+      'account': account.toJson(),
+    };
+    return status == 201 ? MockResponse.created(body) : MockResponse.ok(body);
+  }
+
+  // --- POST /auth/phone/register ---------------------------------------
+
+  Future<MockResponse> _phoneRegister(
+    MockRequest req,
+    Map<String, String> _,
+  ) async {
+    final phone = req.json['phone'] as String?;
+    final password = req.json['password'] as String?;
+    final deviceSecret = req.json['deviceSecret'] as String?;
+    if (phone == null || !_phonePattern.hasMatch(phone)) {
+      return MockResponse.error(422, 'invalid_phone', 'Numero invalide');
+    }
+    final hasPassword = password != null && password.isNotEmpty;
+    final hasDevice = deviceSecret != null && deviceSecret.isNotEmpty;
+    if (!hasPassword && !hasDevice) {
+      return MockResponse.error(
+        422,
+        'credential_required',
+        'Cle d appareil ou mot de passe requis',
+      );
+    }
+    if (hasPassword && password.length < minPasswordLength) {
+      return MockResponse.error(
+        422,
+        'weak_password',
+        'Mot de passe trop court',
+        details: {'minLength': minPasswordLength},
+      );
+    }
+    if (_phonePasswords.containsKey(phone) || _deviceKeys.containsKey(phone)) {
+      return MockResponse.error(
+        409,
+        'phone_taken',
+        'Ce numero a deja un compte',
+      );
+    }
+    if (hasPassword) _phonePasswords[phone] = password;
+    if (hasDevice) _deviceKeys[phone] = {deviceSecret};
+    return _phoneSession(phone, req, status: 201);
+  }
+
+  // --- POST /auth/devices ----------------------------------------------
+
+  Future<MockResponse> _enrollDevice(
+    MockRequest req,
+    Map<String, String> _,
+  ) async {
+    final account = _authenticate(req);
+    final secret = req.json['deviceSecret'] as String?;
+    if (account == null || account.phone == null) {
+      return MockResponse.error(401, 'unauthorized', 'Jeton absent ou invalide');
+    }
+    if (secret == null || secret.length < 40) {
+      return MockResponse.error(
+        422,
+        'weak_device_secret',
+        'Cle d appareil trop courte',
+      );
+    }
+    _deviceKeys.putIfAbsent(account.phone!, () => {}).add(secret);
+    return MockResponse.noContent();
+  }
+
+  static final RegExp _phonePattern = RegExp(
+    r'^\+261(32|33|34|37|38|39|20)\d{7}$',
+  );
+
   // --- POST /auth/password/signup ---------------------------------------
 
   Future<MockResponse> _signUpWithPassword(
@@ -163,7 +318,11 @@ class AuthMockModule extends MockModule {
     final password = req.json['password'] as String?;
 
     if (email == null || !_looksLikeEmail(email)) {
-      return MockResponse.error(422, 'invalid_email', 'Adresse e-mail invalide');
+      return MockResponse.error(
+        422,
+        'invalid_email',
+        'Adresse e-mail invalide',
+      );
     }
     if (password == null || password.length < minPasswordLength) {
       return MockResponse.error(
@@ -196,7 +355,9 @@ class AuthMockModule extends MockModule {
   /// numero ne s'y rattache encore.
   MockResponse _sessionForEmail(String email, {String? deviceLabel}) {
     final phone = _emailLinks[email];
-    if (phone == null) return MockResponse.ok({'linked': false, 'email': email});
+    if (phone == null) {
+      return MockResponse.ok({'linked': false, 'email': email});
+    }
 
     return MockResponse.ok({
       'linked': true,
@@ -362,15 +523,26 @@ class AuthMockModule extends MockModule {
 
   // --- POST /auth/email/link --------------------------------------------
 
-  Future<MockResponse> _linkEmail(MockRequest req, Map<String, String> _) async {
+  Future<MockResponse> _linkEmail(
+    MockRequest req,
+    Map<String, String> _,
+  ) async {
     final account = _authenticate(req);
     if (account == null) {
-      return MockResponse.error(401, 'unauthorized', 'Jeton absent ou invalide');
+      return MockResponse.error(
+        401,
+        'unauthorized',
+        'Jeton absent ou invalide',
+      );
     }
 
     final email = (req.json['email'] as String?)?.trim().toLowerCase();
     if (email == null || !_looksLikeEmail(email)) {
-      return MockResponse.error(422, 'invalid_email', 'Adresse e-mail invalide');
+      return MockResponse.error(
+        422,
+        'invalid_email',
+        'Adresse e-mail invalide',
+      );
     }
 
     // Une adresse ne vaut que pour un compte : la rattacher a un second en
@@ -407,7 +579,8 @@ class AuthMockModule extends MockModule {
     final phone = req.json['phone'] as String?;
     // Memes plages que le domaine : Orange (32), Airtel (33), Telma (34, 38) et
     // le fixe Telma (20). Le simulateur refuse ce que le vrai serveur refusera.
-    if (phone == null || !RegExp(r'^\+261(32|33|34|38|20)\d{7}$').hasMatch(phone)) {
+    if (phone == null ||
+        !RegExp(r'^\+261(32|33|34|38|20)\d{7}$').hasMatch(phone)) {
       return MockResponse.error(
         422,
         'invalid_phone',
@@ -564,8 +737,12 @@ class AuthMockModule extends MockModule {
     }
 
     // Prenom / nom priment sur `displayName` seul, et recomposent le nom d'usage.
-    final newFirst = first != null ? (first.trim().isEmpty ? null : first.trim()) : account.firstName;
-    final newLast = last != null ? (last.trim().isEmpty ? null : last.trim()) : account.lastName;
+    final newFirst = first != null
+        ? (first.trim().isEmpty ? null : first.trim())
+        : account.firstName;
+    final newLast = last != null
+        ? (last.trim().isEmpty ? null : last.trim())
+        : account.lastName;
     final String newName;
     if (first != null || last != null) {
       newName = [newFirst, newLast].whereType<String>().join(' ').trim();
@@ -590,7 +767,11 @@ class AuthMockModule extends MockModule {
 
     return MockResponse.ok({
       ...updated.toJson(),
-      if (reissue) 'session': _issueSession(updated, family: _decode(req.bearer)?['fam'] as String?),
+      if (reissue)
+        'session': _issueSession(
+          updated,
+          family: _decode(req.bearer)?['fam'] as String?,
+        ),
     });
   }
 
@@ -602,7 +783,11 @@ class AuthMockModule extends MockModule {
   ) async {
     final account = _authenticate(req);
     if (account == null) {
-      return MockResponse.error(401, 'unauthorized', 'Jeton absent ou invalide');
+      return MockResponse.error(
+        401,
+        'unauthorized',
+        'Jeton absent ou invalide',
+      );
     }
     final next = req.json['newPassword'] as String?;
     if (next == null || next.length < minPasswordLength) {
@@ -618,7 +803,8 @@ class AuthMockModule extends MockModule {
     // toujours l'un des deux (l'id sert de derniere secours theorique).
     final key = account.email ?? account.phone ?? account.id;
     final existing = _passwords[key];
-    if (existing != null && existing != (req.json['currentPassword'] as String?)) {
+    if (existing != null &&
+        existing != (req.json['currentPassword'] as String?)) {
       // 403 et non 401 : un 401 ferait tourner l'intercepteur de rafraichissement
       // (jeton « expire ») en boucle. La session est valide, c'est la preuve qui
       // est fausse.
@@ -661,11 +847,19 @@ class AuthMockModule extends MockModule {
   ) async {
     final account = _authenticate(req);
     if (account == null) {
-      return MockResponse.error(401, 'unauthorized', 'Jeton absent ou invalide');
+      return MockResponse.error(
+        401,
+        'unauthorized',
+        'Jeton absent ou invalide',
+      );
     }
     final email = (req.json['email'] as String?)?.trim().toLowerCase();
     if (email == null || !_looksLikeEmail(email)) {
-      return MockResponse.error(422, 'invalid_email', 'Adresse e-mail invalide');
+      return MockResponse.error(
+        422,
+        'invalid_email',
+        'Adresse e-mail invalide',
+      );
     }
     final owner = _emailLinks[email];
     if (owner != null && owner != account.phone) {
@@ -699,7 +893,11 @@ class AuthMockModule extends MockModule {
   ) async {
     final account = _authenticate(req);
     if (account == null) {
-      return MockResponse.error(401, 'unauthorized', 'Jeton absent ou invalide');
+      return MockResponse.error(
+        401,
+        'unauthorized',
+        'Jeton absent ou invalide',
+      );
     }
     final result = _takeEmailChallenge(req);
     if (result.error != null) return result.error!;
@@ -726,7 +924,10 @@ class AuthMockModule extends MockModule {
     final updated = account.copyWith(email: newEmail);
     return MockResponse.ok({
       ...updated.toJson(),
-      'session': _issueSession(updated, family: _decode(req.bearer)?['fam'] as String?),
+      'session': _issueSession(
+        updated,
+        family: _decode(req.bearer)?['fam'] as String?,
+      ),
     });
   }
 
@@ -738,7 +939,11 @@ class AuthMockModule extends MockModule {
   ) async {
     final account = _authenticate(req);
     if (account == null) {
-      return MockResponse.error(401, 'unauthorized', 'Jeton absent ou invalide');
+      return MockResponse.error(
+        401,
+        'unauthorized',
+        'Jeton absent ou invalide',
+      );
     }
     final phone = req.json['phone'] as String?;
     if (phone == null ||
@@ -779,7 +984,11 @@ class AuthMockModule extends MockModule {
   ) async {
     final account = _authenticate(req);
     if (account == null) {
-      return MockResponse.error(401, 'unauthorized', 'Jeton absent ou invalide');
+      return MockResponse.error(
+        401,
+        'unauthorized',
+        'Jeton absent ou invalide',
+      );
     }
     final challengeId = req.json['challengeId'] as String?;
     final code = req.json['code'] as String?;
@@ -813,11 +1022,16 @@ class AuthMockModule extends MockModule {
 
     final newPhone = challenge.phone;
     // Le rattachement d'adresse suit le compte vers son nouveau numero.
-    _emailLinks.updateAll((_, phone) => phone == account.phone ? newPhone : phone);
+    _emailLinks.updateAll(
+      (_, phone) => phone == account.phone ? newPhone : phone,
+    );
     final updated = account.copyWith(phone: newPhone);
     return MockResponse.ok({
       ...updated.toJson(),
-      'session': _issueSession(updated, family: _decode(req.bearer)?['fam'] as String?),
+      'session': _issueSession(
+        updated,
+        family: _decode(req.bearer)?['fam'] as String?,
+      ),
     });
   }
 
@@ -829,7 +1043,11 @@ class AuthMockModule extends MockModule {
   ) async {
     final account = _authenticate(req);
     if (account == null) {
-      return MockResponse.error(401, 'unauthorized', 'Jeton absent ou invalide');
+      return MockResponse.error(
+        401,
+        'unauthorized',
+        'Jeton absent ou invalide',
+      );
     }
     final image = req.json['imageBase64'] as String?;
     final type = (req.json['contentType'] as String?)?.trim().toLowerCase();
@@ -846,7 +1064,10 @@ class AuthMockModule extends MockModule {
     final updated = account.copyWith(avatarUrl: 'data:$type;base64,$image');
     return MockResponse.ok({
       ...updated.toJson(),
-      'session': _issueSession(updated, family: _decode(req.bearer)?['fam'] as String?),
+      'session': _issueSession(
+        updated,
+        family: _decode(req.bearer)?['fam'] as String?,
+      ),
     });
   }
 
@@ -856,12 +1077,19 @@ class AuthMockModule extends MockModule {
   ) async {
     final account = _authenticate(req);
     if (account == null) {
-      return MockResponse.error(401, 'unauthorized', 'Jeton absent ou invalide');
+      return MockResponse.error(
+        401,
+        'unauthorized',
+        'Jeton absent ou invalide',
+      );
     }
     final updated = account.copyWith(avatarUrl: null);
     return MockResponse.ok({
       ...updated.toJson(),
-      'session': _issueSession(updated, family: _decode(req.bearer)?['fam'] as String?),
+      'session': _issueSession(
+        updated,
+        family: _decode(req.bearer)?['fam'] as String?,
+      ),
     });
   }
 
@@ -954,10 +1182,16 @@ class AuthMockModule extends MockModule {
   ) async {
     final account = _authenticate(req);
     if (account == null) {
-      return MockResponse.error(401, 'unauthorized', 'Jeton absent ou invalide');
+      return MockResponse.error(
+        401,
+        'unauthorized',
+        'Jeton absent ou invalide',
+      );
     }
     final currentFam = _decode(req.bearer)?['fam'] as String?;
-    final mine = _sessions.entries.where((e) => e.value.accountId == account.id);
+    final mine = _sessions.entries.where(
+      (e) => e.value.accountId == account.id,
+    );
     return MockResponse.ok([
       for (final entry in mine)
         {
@@ -977,7 +1211,11 @@ class AuthMockModule extends MockModule {
   ) async {
     final account = _authenticate(req);
     if (account == null) {
-      return MockResponse.error(401, 'unauthorized', 'Jeton absent ou invalide');
+      return MockResponse.error(
+        401,
+        'unauthorized',
+        'Jeton absent ou invalide',
+      );
     }
     final family = params['family'];
     final session = _sessions[family];

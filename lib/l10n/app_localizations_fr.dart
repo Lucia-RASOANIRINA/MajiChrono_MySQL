@@ -2663,7 +2663,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get vehicleTypeCar => 'Voiture';
 
   @override
-  String get vehicleTypeTricycle => 'Tricycle';
+  String get vehicleTypeTricycle => 'Tricycle (bajaj)';
 
   @override
   String get vehicleBrand => 'Marque';
@@ -2873,6 +2873,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get errorServer => 'Le service est momentanement indisponible.';
 
   @override
+  String get errorTooManyAttempts =>
+      'Trop d\'essais. Patientez quelques minutes avant de réessayer.';
+
+  @override
   String get errorUnauthorized => 'Votre session a expire. Reconnectez-vous.';
 
   @override
@@ -3023,4 +3027,172 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get chatCall => 'Appeler';
+
+  @override
+  String get vehicleTypeVan => 'Camionnette';
+
+  @override
+  String get authPhoneSignInHeadline => 'Bon retour !';
+
+  @override
+  String get authPhoneSignInLead =>
+      'Entrez votre numéro, puis déverrouillez votre téléphone comme d\'habitude.';
+
+  @override
+  String get authPhoneSignUpHeadline => 'Créez votre compte';
+
+  @override
+  String get authPhoneSignUpLead =>
+      '30 secondes, sans SMS : votre téléphone vous reconnaît avec son verrouillage.';
+
+  @override
+  String get authPhoneCountry => '+261';
+
+  @override
+  String get authPasswordShow => 'Afficher le mot de passe';
+
+  @override
+  String get authPasswordHide => 'Masquer le mot de passe';
+
+  @override
+  String get authPhoneNotRegistered =>
+      'Aucun compte avec ce numéro. Créez-en un en quelques secondes.';
+
+  @override
+  String get authPhoneTaken => 'Ce numéro a déjà un compte. Connectez-vous.';
+
+  @override
+  String get authPhonePasswordNotSet =>
+      'Ce compte n\'a pas encore de mot de passe. Entrez par e-mail ou contactez le support.';
+
+  @override
+  String get authPhoneBadCredentials => 'Numéro ou mot de passe incorrect';
+
+  @override
+  String get authPhoneCreateAction => 'Créer mon compte';
+
+  @override
+  String get authPhoneSignInAction => 'Me connecter';
+
+  @override
+  String get authPhoneSwitchToSignUp =>
+      'Nouveau sur MajiChrono ? Créer un compte';
+
+  @override
+  String get authPhoneSwitchToSignIn => 'J\'ai déjà un compte — me connecter';
+
+  @override
+  String get authPhoneTerms =>
+      'En continuant, vous acceptez les conditions d\'utilisation de MajiChrono.';
+
+  @override
+  String get authPhoneCityBadge => 'Majunga';
+
+  @override
+  String homeHello(String name) {
+    return 'Salama, $name';
+  }
+
+  @override
+  String get homeHelloAnonymous => 'Salama !';
+
+  @override
+  String get homeActiveRide => 'Course en cours';
+
+  @override
+  String get homeOpenRide => 'Voir';
+
+  @override
+  String get homeRecenter => 'Me localiser';
+
+  @override
+  String get homeSendParcel => 'Envoyer un colis';
+
+  @override
+  String get homeSendParcelHint =>
+      'Un livreur récupère et livre, avec photo et preuve de remise.';
+
+  @override
+  String get homeMyDeliveries => 'Mes livraisons';
+
+  @override
+  String get homeServicesTitle => 'Que voulez-vous faire ?';
+
+  @override
+  String get deliveryVehicleTitle => 'Véhicule de livraison';
+
+  @override
+  String get vehicleMotoHint => 'Petits colis et documents, jusqu\'à 15 kg';
+
+  @override
+  String get vehicleTricycleHint =>
+      'Cartons et courses de marché, jusqu\'à 30 kg';
+
+  @override
+  String get vehicleCarHint => 'Colis volumineux ou fragiles, à l\'abri';
+
+  @override
+  String get vehicleVanHint => 'Gros volumes, marchandises, déménagement';
+
+  @override
+  String get vehicleTooHeavy => 'Trop lourd pour une moto';
+
+  @override
+  String get vehicleDispatchHint =>
+      'Prix fixe. La demande part aussitôt aux livreurs les plus proches équipés de ce véhicule.';
+
+  @override
+  String get homeVehiclesTitle => 'Quel véhicule pour votre colis ?';
+
+  @override
+  String get addrKnownPlaces => 'Lieux connus de Majunga';
+
+  @override
+  String get pkgNoPhoto => 'Photo non fournie';
+
+  @override
+  String get pkgPhotoRequired =>
+      'Ajoutez une photo du colis : le livreur le reconnaît avant d\'accepter.';
+
+  @override
+  String get authDeviceLockReasonSignUp =>
+      'Confirmez que c\'est bien vous pour créer votre compte MajiChrono';
+
+  @override
+  String get authDeviceLockReasonSignIn =>
+      'Déverrouillez pour entrer dans MajiChrono';
+
+  @override
+  String get authDeviceLockSignUpHint =>
+      'Pas de SMS : vous confirmerez avec le verrouillage de votre téléphone (code, schéma, empreinte ou visage).';
+
+  @override
+  String get authDeviceLockSignInHint =>
+      'Ce téléphone est reconnu : déverrouillez-le pour entrer.';
+
+  @override
+  String get authNewDeviceHint =>
+      'Nouveau téléphone : entrez votre mot de passe une fois, ensuite son verrouillage suffira.';
+
+  @override
+  String get authNoDeviceLockHint =>
+      'Aucun verrouillage sur ce téléphone : choisissez un mot de passe (8 caractères minimum).';
+
+  @override
+  String get authDeviceLockCancelled =>
+      'Vérification annulée. Réessayez pour continuer.';
+
+  @override
+  String get authDeviceNotRecognized =>
+      'Ce téléphone n\'est plus reconnu pour ce compte. Entrez votre mot de passe.';
+
+  @override
+  String get authBackupPasswordToggle => 'Ajouter un mot de passe de secours';
+
+  @override
+  String get authBackupPasswordHint =>
+      'Facultatif : utile pour vous connecter depuis un autre téléphone.';
+
+  @override
+  String get authUnlockAndEnter => 'Déverrouiller et entrer';
 }

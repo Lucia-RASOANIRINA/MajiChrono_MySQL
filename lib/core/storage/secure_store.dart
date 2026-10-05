@@ -21,6 +21,11 @@ class SecureStore {
   static const String keyPinSalt = 'auth.pin_salt';
   static const String keyDbPassphrase = 'storage.db_passphrase';
 
+  /// Prefixe des cles d'appareil (entree par le verrouillage du telephone).
+  /// Elles survivent a la deconnexion : elles lient ce telephone a un compte,
+  /// elles n'ouvrent rien sans le verrouillage de son proprietaire.
+  static const String deviceKeyPrefix = 'device.key.';
+
   final FlutterSecureStorage _storage;
 
   Future<String?> read(String key) => _storage.read(key: key);
@@ -31,6 +36,16 @@ class SecureStore {
 
   Future<void> delete(String key) => _storage.delete(key: key);
 
-  /// Effacement complet a la deconnexion (EXI-SEC10).
-  Future<void> wipe() => _storage.deleteAll();
+  /// Effacement a la deconnexion (EXI-SEC10) : jetons, code PIN, cache — tout,
+  /// sauf les cles d'appareil. Les effacer obligerait l'utilisateur a
+  /// ressortir un mot de passe de secours a chaque deconnexion.
+  Future<void> wipe() async {
+    final all = await _storage.readAll();
+    await _storage.deleteAll();
+    for (final entry in all.entries) {
+      if (entry.key.startsWith(deviceKeyPrefix)) {
+        await _storage.write(key: entry.key, value: entry.value);
+      }
+    }
+  }
 }

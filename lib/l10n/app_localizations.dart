@@ -5057,7 +5057,7 @@ abstract class AppLocalizations {
   /// No description provided for @vehicleTypeTricycle.
   ///
   /// In fr, this message translates to:
-  /// **'Tricycle'**
+  /// **'Tricycle (bajaj)'**
   String get vehicleTypeTricycle;
 
   /// No description provided for @vehicleBrand.
@@ -5444,6 +5444,12 @@ abstract class AppLocalizations {
   /// **'Le service est momentanement indisponible.'**
   String get errorServer;
 
+  /// No description provided for @errorTooManyAttempts.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trop d\'essais. Patientez quelques minutes avant de réessayer.'**
+  String get errorTooManyAttempts;
+
   /// No description provided for @errorUnauthorized.
   ///
   /// In fr, this message translates to:
@@ -5725,6 +5731,300 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Appeler'**
   String get chatCall;
+
+  /// No description provided for @vehicleTypeVan.
+  ///
+  /// In fr, this message translates to:
+  /// **'Camionnette'**
+  String get vehicleTypeVan;
+
+  /// No description provided for @authPhoneSignInHeadline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bon retour !'**
+  String get authPhoneSignInHeadline;
+
+  /// No description provided for @authPhoneSignInLead.
+  ///
+  /// In fr, this message translates to:
+  /// **'Entrez votre numéro, puis déverrouillez votre téléphone comme d\'habitude.'**
+  String get authPhoneSignInLead;
+
+  /// No description provided for @authPhoneSignUpHeadline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créez votre compte'**
+  String get authPhoneSignUpHeadline;
+
+  /// No description provided for @authPhoneSignUpLead.
+  ///
+  /// In fr, this message translates to:
+  /// **'30 secondes, sans SMS : votre téléphone vous reconnaît avec son verrouillage.'**
+  String get authPhoneSignUpLead;
+
+  /// No description provided for @authPhoneCountry.
+  ///
+  /// In fr, this message translates to:
+  /// **'+261'**
+  String get authPhoneCountry;
+
+  /// No description provided for @authPasswordShow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Afficher le mot de passe'**
+  String get authPasswordShow;
+
+  /// No description provided for @authPasswordHide.
+  ///
+  /// In fr, this message translates to:
+  /// **'Masquer le mot de passe'**
+  String get authPasswordHide;
+
+  /// No description provided for @authPhoneNotRegistered.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun compte avec ce numéro. Créez-en un en quelques secondes.'**
+  String get authPhoneNotRegistered;
+
+  /// No description provided for @authPhoneTaken.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce numéro a déjà un compte. Connectez-vous.'**
+  String get authPhoneTaken;
+
+  /// No description provided for @authPhonePasswordNotSet.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce compte n\'a pas encore de mot de passe. Entrez par e-mail ou contactez le support.'**
+  String get authPhonePasswordNotSet;
+
+  /// No description provided for @authPhoneBadCredentials.
+  ///
+  /// In fr, this message translates to:
+  /// **'Numéro ou mot de passe incorrect'**
+  String get authPhoneBadCredentials;
+
+  /// No description provided for @authPhoneCreateAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créer mon compte'**
+  String get authPhoneCreateAction;
+
+  /// No description provided for @authPhoneSignInAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Me connecter'**
+  String get authPhoneSignInAction;
+
+  /// No description provided for @authPhoneSwitchToSignUp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau sur MajiChrono ? Créer un compte'**
+  String get authPhoneSwitchToSignUp;
+
+  /// No description provided for @authPhoneSwitchToSignIn.
+  ///
+  /// In fr, this message translates to:
+  /// **'J\'ai déjà un compte — me connecter'**
+  String get authPhoneSwitchToSignIn;
+
+  /// No description provided for @authPhoneTerms.
+  ///
+  /// In fr, this message translates to:
+  /// **'En continuant, vous acceptez les conditions d\'utilisation de MajiChrono.'**
+  String get authPhoneTerms;
+
+  /// No description provided for @authPhoneCityBadge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Majunga'**
+  String get authPhoneCityBadge;
+
+  /// No description provided for @homeHello.
+  ///
+  /// In fr, this message translates to:
+  /// **'Salama, {name}'**
+  String homeHello(String name);
+
+  /// No description provided for @homeHelloAnonymous.
+  ///
+  /// In fr, this message translates to:
+  /// **'Salama !'**
+  String get homeHelloAnonymous;
+
+  /// No description provided for @homeActiveRide.
+  ///
+  /// In fr, this message translates to:
+  /// **'Course en cours'**
+  String get homeActiveRide;
+
+  /// No description provided for @homeOpenRide.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir'**
+  String get homeOpenRide;
+
+  /// No description provided for @homeRecenter.
+  ///
+  /// In fr, this message translates to:
+  /// **'Me localiser'**
+  String get homeRecenter;
+
+  /// No description provided for @homeSendParcel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer un colis'**
+  String get homeSendParcel;
+
+  /// No description provided for @homeSendParcelHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un livreur récupère et livre, avec photo et preuve de remise.'**
+  String get homeSendParcelHint;
+
+  /// No description provided for @homeMyDeliveries.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mes livraisons'**
+  String get homeMyDeliveries;
+
+  /// No description provided for @homeServicesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Que voulez-vous faire ?'**
+  String get homeServicesTitle;
+
+  /// No description provided for @deliveryVehicleTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Véhicule de livraison'**
+  String get deliveryVehicleTitle;
+
+  /// No description provided for @vehicleMotoHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Petits colis et documents, jusqu\'à 15 kg'**
+  String get vehicleMotoHint;
+
+  /// No description provided for @vehicleTricycleHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cartons et courses de marché, jusqu\'à 30 kg'**
+  String get vehicleTricycleHint;
+
+  /// No description provided for @vehicleCarHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Colis volumineux ou fragiles, à l\'abri'**
+  String get vehicleCarHint;
+
+  /// No description provided for @vehicleVanHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Gros volumes, marchandises, déménagement'**
+  String get vehicleVanHint;
+
+  /// No description provided for @vehicleTooHeavy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trop lourd pour une moto'**
+  String get vehicleTooHeavy;
+
+  /// No description provided for @vehicleDispatchHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prix fixe. La demande part aussitôt aux livreurs les plus proches équipés de ce véhicule.'**
+  String get vehicleDispatchHint;
+
+  /// No description provided for @homeVehiclesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quel véhicule pour votre colis ?'**
+  String get homeVehiclesTitle;
+
+  /// No description provided for @addrKnownPlaces.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lieux connus de Majunga'**
+  String get addrKnownPlaces;
+
+  /// No description provided for @pkgNoPhoto.
+  ///
+  /// In fr, this message translates to:
+  /// **'Photo non fournie'**
+  String get pkgNoPhoto;
+
+  /// No description provided for @pkgPhotoRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajoutez une photo du colis : le livreur le reconnaît avant d\'accepter.'**
+  String get pkgPhotoRequired;
+
+  /// No description provided for @authDeviceLockReasonSignUp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmez que c\'est bien vous pour créer votre compte MajiChrono'**
+  String get authDeviceLockReasonSignUp;
+
+  /// No description provided for @authDeviceLockReasonSignIn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déverrouillez pour entrer dans MajiChrono'**
+  String get authDeviceLockReasonSignIn;
+
+  /// No description provided for @authDeviceLockSignUpHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pas de SMS : vous confirmerez avec le verrouillage de votre téléphone (code, schéma, empreinte ou visage).'**
+  String get authDeviceLockSignUpHint;
+
+  /// No description provided for @authDeviceLockSignInHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce téléphone est reconnu : déverrouillez-le pour entrer.'**
+  String get authDeviceLockSignInHint;
+
+  /// No description provided for @authNewDeviceHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau téléphone : entrez votre mot de passe une fois, ensuite son verrouillage suffira.'**
+  String get authNewDeviceHint;
+
+  /// No description provided for @authNoDeviceLockHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun verrouillage sur ce téléphone : choisissez un mot de passe (8 caractères minimum).'**
+  String get authNoDeviceLockHint;
+
+  /// No description provided for @authDeviceLockCancelled.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérification annulée. Réessayez pour continuer.'**
+  String get authDeviceLockCancelled;
+
+  /// No description provided for @authDeviceNotRecognized.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce téléphone n\'est plus reconnu pour ce compte. Entrez votre mot de passe.'**
+  String get authDeviceNotRecognized;
+
+  /// No description provided for @authBackupPasswordToggle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter un mot de passe de secours'**
+  String get authBackupPasswordToggle;
+
+  /// No description provided for @authBackupPasswordHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Facultatif : utile pour vous connecter depuis un autre téléphone.'**
+  String get authBackupPasswordHint;
+
+  /// No description provided for @authUnlockAndEnter.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déverrouiller et entrer'**
+  String get authUnlockAndEnter;
 }
 
 class _AppLocalizationsDelegate

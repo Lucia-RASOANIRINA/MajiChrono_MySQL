@@ -88,6 +88,7 @@ class UnauthorizedFailure extends Failure {
 class ConflictFailure extends Failure {
   const ConflictFailure({
     this.currentState,
+    this.code,
     super.cause,
     super.stackTrace,
     super.details,
@@ -95,6 +96,10 @@ class ConflictFailure extends Failure {
 
   /// Etat courant renvoye par le serveur, qui fait foi (EXI-S04).
   final String? currentState;
+
+  /// Code metier du conflit (ex. `phone_taken`), quand l'interface doit en
+  /// dire plus que « deja traite ».
+  final String? code;
 
   @override
   String get messageKey => 'errorConflict';

@@ -69,13 +69,14 @@ class RoleShell extends StatelessWidget {
   }
 }
 
-/// Barre de navigation flottante, arrondie, dans le langage visuel du home.
+/// Barre de navigation flottante, aux couleurs de la charte.
 ///
-/// Un rail unique porte les destinations ; sous l'onglet actif glisse une
-/// pilule teintee de la couleur de marque. L'icone se remplit et le libelle
-/// passe en gras : trois signaux concordants pour dire ou l'on est, ce qui
-/// reste lisible en plein soleil et pour les daltonismes (EXI-T09). Le libelle
-/// demeure toujours visible sous chaque icone (§15.1).
+/// L'onglet actif porte une pilule pleine au bleu de marque, icone blanche
+/// legerement agrandie, libelle en gras et bleu ; les autres restent en gris
+/// ardoise. Trois signaux concordants (forme, couleur, graisse) disent ou l'on
+/// est, lisibles en plein soleil et pour les daltonismes (EXI-T09). Le libelle
+/// demeure toujours visible, a 14 sp comme tout texte de l'application
+/// (§15.1).
 class _ModernNavBar extends StatelessWidget {
   const _ModernNavBar({
     required this.currentIndex,
@@ -89,29 +90,27 @@ class _ModernNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
-    final surface = theme.colorScheme.surface;
-    final border = theme.colorScheme.outlineVariant;
+    final isDark = theme.brightness == Brightness.dark;
 
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
         child: Container(
-          height: 70,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          height: 76,
+          padding: const EdgeInsets.symmetric(horizontal: 6),
           decoration: BoxDecoration(
-            color: surface,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: border),
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
             boxShadow: [
               BoxShadow(
                 color: AppColors.primary.withValues(
-                  alpha: isDark ? 0.28 : 0.10,
+                  alpha: isDark ? 0.35 : 0.12,
                 ),
-                blurRadius: 20,
-                offset: const Offset(0, 6),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
@@ -122,7 +121,6 @@ class _ModernNavBar extends StatelessWidget {
                   child: _NavItem(
                     destination: destinations[i],
                     selected: i == currentIndex,
-                    isDark: isDark,
                     onTap: () => onSelected(i),
                   ),
                 ),
@@ -138,70 +136,91 @@ class _NavItem extends StatelessWidget {
   const _NavItem({
     required this.destination,
     required this.selected,
-    required this.isDark,
     required this.onTap,
   });
 
   final ShellDestination destination;
   final bool selected;
-  final bool isDark;
   final VoidCallback onTap;
+
+  static const Duration _motion = Duration(milliseconds: 260);
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = isDark ? const Color(0xFF93C5FD) : AppColors.primary;
-    final idleColor = isDark
-        ? const Color(0xFF94A3B8)
-        : const Color(0xFF64748B);
-    final color = selected ? activeColor : idleColor;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final active = isDark ? scheme.primary : AppColors.primary;
+    final idle = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
     return Semantics(
       button: true,
       selected: selected,
       label: destination.label,
+      excludeSemantics: true,
       child: Tooltip(
         message: destination.label,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
+          borderRadius: BorderRadius.circular(22),
+          child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 48),
-            padding: const EdgeInsets.symmetric(vertical: 8),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
               children: [
                 AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
-                  ),
+                  duration: _motion,
+                  curve: Curves.easeOutBack,
+                  width: selected ? 58 : 44,
+                  height: 32,
                   decoration: BoxDecoration(
-                    color: selected
-                        ? activeColor.withValues(alpha: isDark ? 0.22 : 0.12)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: selected
+                        ? LinearGradient(
+                            colors: isDark
+                                ? [scheme.primary, scheme.primary]
+                                : const [
+                                    AppColors.primaryLight,
+                                    AppColors.primary,
+                                  ],
+                          )
+                        : null,
+                    boxShadow: selected
+                        ? [
+                            BoxShadow(
+                              color: active.withValues(alpha: 0.35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : null,
                   ),
-                  child: Icon(
-                    selected ? destination.selectedIcon : destination.icon,
-                    size: 22,
-                    color: color,
+                  child: AnimatedScale(
+                    duration: _motion,
+                    curve: Curves.easeOutBack,
+                    scale: selected ? 1.12 : 1,
+                    child: Icon(
+                      selected ? destination.selectedIcon : destination.icon,
+                      size: 22,
+                      color: selected
+                          ? (isDark ? scheme.onPrimary : Colors.white)
+                          : idle,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  destination.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
+                const SizedBox(height: 4),
+                AnimatedDefaultTextStyle(
+                  duration: _motion,
+                  // Part de la typographie du theme : meme police que le reste.
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                    fontSize: 14,
                     height: 1.1,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    color: color,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    color: selected ? active : idle,
+                  ),
+                  child: Text(
+                    destination.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

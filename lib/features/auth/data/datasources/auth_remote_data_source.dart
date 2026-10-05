@@ -20,9 +20,34 @@ class AuthRemoteDataSource {
   Future<Map<String, dynamic>> phoneLogin({
     required String phone,
     String? password,
+    String? deviceSecret,
   }) => _client.post<Map<String, dynamic>>(
     ApiEndpoints.phoneLogin,
-    body: {'phone': phone, 'password': ?password},
+    body: {
+      'phone': phone,
+      'password': ?password,
+      'deviceSecret': ?deviceSecret,
+    },
+  );
+
+  Future<Map<String, dynamic>> phoneRegister({
+    required String phone,
+    String? password,
+    String? deviceSecret,
+    String? fullName,
+  }) => _client.post<Map<String, dynamic>>(
+    ApiEndpoints.phoneRegister,
+    body: {
+      'phone': phone,
+      'password': ?password,
+      'deviceSecret': ?deviceSecret,
+      'fullName': ?fullName,
+    },
+  );
+
+  Future<void> enrollDevice(String deviceSecret) => _client.post<void>(
+    ApiEndpoints.authDevices,
+    body: {'deviceSecret': deviceSecret},
   );
 
   Future<Map<String, dynamic>> verifyOtp({

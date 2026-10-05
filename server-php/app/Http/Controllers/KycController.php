@@ -31,7 +31,7 @@ class KycController extends Controller
     private function admin(Request $request)
     {
         $account = CurrentAccount::resolve($request);
-        if ($account->role !== 'admin') {
+        if (! $account->isAdmin()) {
             throw ApiException::forbidden('admin_required', 'Acces reserve a l administration');
         }
 
@@ -146,7 +146,7 @@ class KycController extends Controller
     {
         $viewer = CurrentAccount::resolve($request);
         $this->validateKind($kind);
-        if ((string) $viewer->id !== $accountId && $viewer->role !== 'admin') {
+        if ((string) $viewer->id !== $accountId && ! $viewer->isAdmin()) {
             throw ApiException::forbidden('not_allowed', 'Acces reserve');
         }
 

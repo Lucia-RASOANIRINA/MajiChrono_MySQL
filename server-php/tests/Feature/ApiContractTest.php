@@ -43,7 +43,11 @@ class ApiContractTest extends TestCase
         $delivery = new Delivery;
         $delivery->id = 123;
 
-        $this->assertSame('MC-0000-3F', $delivery->publicTrackingCode());
+        // Numero de course en base 36, puis six caracteres de controle signes :
+        // le code ne se devine plus a partir du numero.
+        $code = $delivery->publicTrackingCode();
+        $this->assertMatchesRegularExpression('/^MC-3F-[A-Z0-9]{6}$/', $code);
+        $this->assertNotSame('MC-0000-3F', $code);
     }
 
     public function test_client_delivery_endpoints_require_authentication(): void
@@ -61,6 +65,24 @@ class ApiContractTest extends TestCase
             'password' => 'short',
         ])->assertStatus(422)
             ->assertJsonPath('error.code', 'invalid_email');
+    }
+
+    public function test_phone_register_rejects_an_invalid_number(): void
+    {
+        $this->postJson('/auth/phone/register', [
+            'phone' => '+261351234567',
+            'password' => 'password123',
+        ])->assertStatus(422)
+            ->assertJsonPath('error.code', 'invalid_phone');
+    }
+
+    public function test_phone_register_rejects_a_short_password(): void
+    {
+        $this->postJson('/auth/phone/register', [
+            'phone' => '+261341234567',
+            'password' => 'court',
+        ])->assertStatus(422)
+            ->assertJsonPath('error.code', 'weak_password');
     }
 
     public function test_protected_auth_routes_require_an_access_token(): void

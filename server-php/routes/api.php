@@ -9,6 +9,7 @@ use App\Http\Controllers\DisputeController;
 use App\Http\Controllers\KycController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\OperationsController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SupportController;
@@ -17,26 +18,28 @@ use Illuminate\Support\Facades\Route;
 // Memes chemins que server/app/routers/auth.py (et ApiEndpoints.dart cote
 // mobile) : aucun changement d'URL entre les deux backends.
 Route::prefix('auth')->group(function () {
-    Route::post('/otp/request', [AuthController::class, 'requestOtp']);
-    Route::post('/otp/verify', [AuthController::class, 'verifyOtp']);
-    Route::post('/phone/login', [AuthController::class, 'phoneLogin']);
+    Route::post('/otp/request', [AuthController::class, 'requestOtp'])->middleware('throttle:auth-code');
+    Route::post('/otp/verify', [AuthController::class, 'verifyOtp'])->middleware('throttle:auth-login');
+    Route::post('/phone/login', [AuthController::class, 'phoneLogin'])->middleware('throttle:auth-login');
+    Route::post('/phone/register', [AuthController::class, 'phoneRegister'])->middleware('throttle:auth-public');
+    Route::post('/devices', [AuthController::class, 'enrollDevice']);
 
-    Route::post('/email/request', [AuthController::class, 'requestEmailCode']);
-    Route::post('/email/verify', [AuthController::class, 'verifyEmailCode']);
-    Route::post('/email/register', [AuthController::class, 'registerWithEmail']);
-    Route::post('/password/signin', [AuthController::class, 'signInWithPassword']);
-    Route::post('/password/signup', [AuthController::class, 'signUpWithPassword']);
-    Route::post('/password/reset', [AuthController::class, 'resetPassword']);
-    Route::post('/email/change/request', [AuthController::class, 'requestEmailChange']);
+    Route::post('/email/request', [AuthController::class, 'requestEmailCode'])->middleware('throttle:auth-code');
+    Route::post('/email/verify', [AuthController::class, 'verifyEmailCode'])->middleware('throttle:auth-login');
+    Route::post('/email/register', [AuthController::class, 'registerWithEmail'])->middleware('throttle:auth-public');
+    Route::post('/password/signin', [AuthController::class, 'signInWithPassword'])->middleware('throttle:auth-login');
+    Route::post('/password/signup', [AuthController::class, 'signUpWithPassword'])->middleware('throttle:auth-public');
+    Route::post('/password/reset', [AuthController::class, 'resetPassword'])->middleware('throttle:auth-login');
+    Route::post('/email/change/request', [AuthController::class, 'requestEmailChange'])->middleware('throttle:auth-code');
     Route::post('/email/change/verify', [AuthController::class, 'verifyEmailChange']);
-    Route::post('/phone/change/request', [AuthController::class, 'requestPhoneChange']);
+    Route::post('/phone/change/request', [AuthController::class, 'requestPhoneChange'])->middleware('throttle:auth-code');
     Route::post('/phone/change/verify', [AuthController::class, 'verifyPhoneChange']);
     Route::post('/email/link', [AuthController::class, 'linkEmail']);
-    Route::post('/password/change', [AuthController::class, 'changePassword']);
+    Route::post('/password/change', [AuthController::class, 'changePassword'])->middleware('throttle:auth-login');
     Route::get('/sessions', [AuthController::class, 'sessions']);
     Route::delete('/sessions/{family}', [AuthController::class, 'revokeSession']);
 
-    Route::post('/refresh', [AuthController::class, 'refresh']);
+    Route::post('/refresh', [AuthController::class, 'refresh'])->middleware('throttle:auth-public');
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 
@@ -69,7 +72,7 @@ Route::get('/reviews/delivery/{deliveryId}', [ReviewController::class, 'show']);
 Route::get('/notifications', [SupportController::class, 'notifications']);
 Route::post('/notifications/{notificationId}/read', [SupportController::class, 'markNotificationRead']);
 Route::delete('/notifications/{notificationId}', [SupportController::class, 'deleteNotification']);
-Route::post('/contact', [SupportController::class, 'contact']);
+Route::post('/contact', [SupportController::class, 'contact'])->middleware('throttle:public-track');
 Route::get('/contact', [SupportController::class, 'contacts']);
 Route::get('/admin/contact', [SupportController::class, 'adminContacts']);
 Route::post('/admin/contact/{messageId}/reply', [SupportController::class, 'replyContact']);
@@ -125,13 +128,17 @@ Route::get('/admin/kyc/{driverId}/messages', [KycController::class, 'adminMessag
 Route::post('/admin/kyc/{driverId}/messages', [KycController::class, 'adminSendMessage']);
 Route::post('/admin/kyc/{driverId}/review', [KycController::class, 'review']);
 Route::get('/relay-points', [DeliveryController::class, 'relayPoints']);
-Route::get('/track/{token}', [DeliveryController::class, 'track']);
-Route::get('/public/track/{token}', [DeliveryController::class, 'track']);
+Route::get('/track/{token}', [DeliveryController::class, 'track'])->middleware('throttle:public-track');
+Route::get('/public/track/{token}', [DeliveryController::class, 'track'])->middleware('throttle:public-track');
 Route::get('/deliveries/available', [DeliveryController::class, 'available']);
 Route::post('/driver/status', [DeliveryController::class, 'driverStatus']);
 Route::get('/driver/vehicle', [DeliveryController::class, 'vehicle']);
 Route::patch('/driver/vehicle', [DeliveryController::class, 'updateVehicle']);
 Route::post('/tracking/batch', [DeliveryController::class, 'trackingBatch']);
+Route::post('/drivers/emergency', [OperationsController::class, 'raiseEmergency']);
+Route::get('/drivers/emergency', [OperationsController::class, 'emergencies']);
+Route::post('/admin/emergencies/{alertId}/acknowledge', [OperationsController::class, 'acknowledgeEmergency']);
+Route::post('/admin/deliveries/{id}/reassign', [OperationsController::class, 'reassign']);
 Route::prefix('deliveries')->group(function () {
     Route::get('', [DeliveryController::class, 'index']);
     Route::post('', [DeliveryController::class, 'store']);
@@ -141,4 +148,8 @@ Route::prefix('deliveries')->group(function () {
     Route::post('/{id}/status', [DeliveryController::class, 'status']);
     Route::post('/{id}/incidents', [DeliveryController::class, 'reportIncident']);
     Route::get('/{id}/incidents', [DeliveryController::class, 'incidents']);
+    Route::get('/{id}/trace', [OperationsController::class, 'trace']);
+    Route::get('/{id}/custody', [OperationsController::class, 'custody']);
+    Route::post('/{id}/custody/pickup', [OperationsController::class, 'custodyPickup']);
+    Route::post('/{id}/custody/handover', [OperationsController::class, 'custodyHandover']);
 });

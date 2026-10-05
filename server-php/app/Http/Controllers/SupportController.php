@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\ApiException;
+use App\Models\Account;
 use App\Models\ContactMessage;
+use App\Models\Delivery;
 use App\Models\Dispute;
 use App\Models\Notification;
 use App\Models\ReclamationFile;
@@ -160,10 +162,7 @@ class SupportController extends Controller
     public function files(Request $request, string $disputeId)
     {
         $account = CurrentAccount::resolve($request);
-        $dispute = Dispute::find($disputeId);
-        if ($dispute === null || ((string) $dispute->opened_by !== (string) $account->id && $account->role !== 'admin')) {
-            throw ApiException::notFound('Litige inconnu');
-        }
+        $dispute = $this->disputeFor($account, $disputeId);
 
         return response()->json([
             'items' => ReclamationFile::where('reclamation_id', $disputeId)->orderBy('created_at')->get()->map(
@@ -182,10 +181,7 @@ class SupportController extends Controller
     public function addFile(Request $request, string $disputeId)
     {
         $account = CurrentAccount::resolve($request);
-        $dispute = Dispute::find($disputeId);
-        if ($dispute === null || ((string) $dispute->opened_by !== (string) $account->id && $account->role !== 'admin')) {
-            throw ApiException::notFound('Litige inconnu');
-        }
+        $dispute = $this->disputeFor($account, $disputeId);
         $values = [
             'filePath' => trim((string) $request->input('filePath')),
             'originalName' => trim((string) $request->input('originalName')),
@@ -257,10 +253,29 @@ class SupportController extends Controller
         return response()->json(['key' => $setting->key_name, 'value' => $setting->value]);
     }
 
+    /**
+     * Litige visible par ce compte : l'exploitation, ou l'une des deux parties
+     * de la course. `opened_by` porte le role de l'ouvrant (client, driver),
+     * pas son identifiant : c'est la course qui dit qui est partie.
+     */
+    private function disputeFor(Account $account, string $disputeId): Dispute
+    {
+        $dispute = Dispute::find($disputeId);
+        $delivery = $dispute === null ? null : Delivery::find($dispute->delivery_id);
+        $party = $delivery !== null && in_array((string) $account->id, [
+            (string) $delivery->client_id, (string) $delivery->driver_id,
+        ], true);
+        if ($dispute === null || (! $party && ! $account->isAdmin())) {
+            throw ApiException::notFound('Litige inconnu');
+        }
+
+        return $dispute;
+    }
+
     private function requireAdmin(Request $request)
     {
         $account = CurrentAccount::resolve($request);
-        if ($account->role !== 'admin') {
+        if (! $account->isAdmin()) {
             throw ApiException::forbidden('admin_required', "Accès réservé à l'administration");
         }
 

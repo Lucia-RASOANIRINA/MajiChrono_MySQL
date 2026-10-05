@@ -77,6 +77,9 @@ final mockBackendProvider = Provider<MockBackend>((ref) {
     ..register(
       DriverMockModule(
         deliveries: () => deliveries.store,
+        // Photos de colis de demonstration, servies par le meme depot que
+        // les photos des expediteurs.
+        putMedia: (bytes) => deliveries.putMedia(bytes),
         kycStatus: 'approved',
       ),
     )

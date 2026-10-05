@@ -36,7 +36,10 @@ class McPrimaryAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final large = height >= AppSizes.driverActionHeight;
+
     return SafeArea(
       minimum: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
@@ -52,15 +55,31 @@ class McPrimaryAction extends StatelessWidget {
           style: FilledButton.styleFrom(
             backgroundColor: destructive ? scheme.error : null,
             foregroundColor: destructive ? scheme.onError : null,
-            textStyle: TextStyle(
-              fontSize: height >= AppSizes.driverActionHeight ? 20 : 16,
-              fontWeight: FontWeight.w700,
+            // Moins de marge verticale que le bouton standard : le libelle du
+            // livreur peut tenir sur deux lignes sans etre rogne.
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.sm,
+            ),
+            // Le style part de la typographie du theme : meme police, meme
+            // interlettrage que le reste de l'application.
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              fontSize: large ? 18 : 16,
+              fontWeight: FontWeight.w800,
+              height: 1.15,
             ),
           ),
           icon: busy
-              ? const McLoader.small()
-              : Icon(icon ?? Icons.arrow_forward),
-          label: Text(label, textAlign: TextAlign.center),
+              ? McLoader.small(color: scheme.onSurfaceVariant)
+              : Icon(icon ?? Icons.arrow_forward, size: large ? 26 : 22),
+          // Deux lignes au plus : « Tonga eo amin'ny toerana aho » ne tient
+          // pas sur une seule a 360 dp, et un libelle rogne ne se lit plus.
+          label: Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ),
     );

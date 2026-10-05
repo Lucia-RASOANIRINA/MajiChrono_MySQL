@@ -11,13 +11,28 @@ abstract interface class AuthRepository {
   /// Demande l'envoi d'un code OTP (EXI-T01).
   Future<OtpChallenge> requestOtp(MalagasyPhone phone);
 
+  /// Entree par numero : cle d'appareil (verrouillage du telephone) ou mot
+  /// de passe de secours.
   Future<PhoneLoginResult> loginWithPhone({
     required MalagasyPhone phone,
     String? password,
+    String? deviceSecret,
   });
+
+  /// Lie ce telephone au compte de la session ouverte.
+  Future<void> enrollDevice(String deviceSecret);
 
   /// Verifie un code. Leve une [ValidationFailure] si le code est faux, en
   /// indiquant le nombre de tentatives restantes.
+  /// Ouvre un compte par numero et mot de passe, sans code SMS, et rend la
+  /// session ouverte. Le profil (client ou livreur) se pose ensuite.
+  Future<OtpVerification> registerWithPhone({
+    required MalagasyPhone phone,
+    String? password,
+    String? deviceSecret,
+    String? fullName,
+  });
+
   Future<OtpVerification> verifyOtp({
     required String challengeId,
     required String code,

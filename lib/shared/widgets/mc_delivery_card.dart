@@ -70,12 +70,19 @@ class McDeliveryCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            McStatusBadge(
-              label: statusLabel,
-              icon: statusIcon,
-              tone: statusTone,
+            // Le statut prend toute la place libre et ne se tronque qu'en
+            // dernier recours : le prix et le chevron restent toujours visibles.
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: McStatusBadge(
+                  label: statusLabel,
+                  icon: statusIcon,
+                  tone: statusTone,
+                ),
+              ),
             ),
-            const Spacer(),
+            const SizedBox(width: AppSpacing.sm),
             ?trailing,
             if (onTap != null) ...[
               const SizedBox(width: AppSpacing.xs),

@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 /// Source des tuiles cartographiques.
 ///
 /// Le fond de carte est le seul poste de MajiChrono qui puisse devenir payant
@@ -41,15 +39,16 @@ enum TileSource {
     productionReady: true,
   ),
 
-  /// CARTO Voyager — tuiles raster HTTPS, adaptees a `flutter_map`.
+  /// CARTO Voyager — tuiles raster HTTPS.
   ///
-  /// OpenFreeMap fournit des tuiles vectorielles PBF et ne peut donc pas etre
-  /// branche directement sur `TileLayer`, qui attend une image raster.
+  /// **Exige desormais une cle.** Verifie le 2 octobre 2026 : sans cle, le
+  /// serveur repond 200 avec une image « API KEY REQUIRED » a la place de
+  /// chaque tuile — la carte affichait ce bandeau partout en production.
   cartoVoyager(
     url: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
     attribution: '© CARTO © OpenStreetMap',
-    needsKey: false,
-    productionReady: true,
+    needsKey: true,
+    productionReady: false,
   ),
 
   /// MapTiler — 100 000 tuiles par mois offertes, puis payant.
@@ -58,7 +57,10 @@ enum TileSource {
   /// support, et statistiques d'usage. Le passage se fait en changeant cette
   /// valeur et en posant la cle.
   mapTiler(
-    url: 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={key}',
+    // Chemin « 256 » : tuiles de 256 px, la taille qu'attend `TileLayer`.
+    // Sans lui, MapTiler sert du 512 px et la carte s'affiche au mauvais zoom.
+    url:
+        'https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key={key}',
     attribution: '© MapTiler © OpenStreetMap',
     needsKey: true,
     productionReady: true,
@@ -103,13 +105,20 @@ enum TileSource {
 class TileConfig {
   const TileConfig({required this.source, this.apiKey = '', this.host = ''});
 
+  /// Cle MapTiler, fournie a la construction :
+  /// `--dart-define=MAP_TILES_KEY=...`.
+  static const String _mapTilerKey = String.fromEnvironment('MAP_TILES_KEY');
+
   /// Configuration retenue.
   ///
-  /// En debogage, le serveur d'OSM suffit. En release, CARTO Voyager fournit
-  /// bien des images raster, contrairement aux tuiles PBF d'OpenFreeMap.
-  factory TileConfig.forBuild() => TileConfig(
-    source: kDebugMode ? TileSource.osmDev : TileSource.cartoVoyager,
-  );
+  /// Avec une cle MapTiler, c'est MapTiler (contrat, quota connu). Sans cle,
+  /// le serveur d'OpenStreetMap : il fonctionne a Majunga (verifie le
+  /// 2 octobre 2026) et le cache de 30 jours limite fortement les requetes,
+  /// mais sa politique d'usage ne convient pas a un trafic important — une
+  /// cle MapTiler est a poser avant d'elargir le service.
+  factory TileConfig.forBuild() => _mapTilerKey.isEmpty
+      ? const TileConfig(source: TileSource.osmDev)
+      : const TileConfig(source: TileSource.mapTiler, apiKey: _mapTilerKey);
 
   final TileSource source;
   final String apiKey;

@@ -1,9 +1,0 @@
-.env
-.env.*
-!*.example
-__pycache__/
-*.pyc
-.venv/
-*.db
-install.log
-.pip-cache/

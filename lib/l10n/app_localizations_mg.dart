@@ -2667,7 +2667,7 @@ class AppLocalizationsMg extends AppLocalizations {
   String get vehicleTypeCar => 'Fiara';
 
   @override
-  String get vehicleTypeTricycle => 'Tricycle';
+  String get vehicleTypeTricycle => 'Tricycle (bajaj)';
 
   @override
   String get vehicleBrand => 'Marika';
@@ -2877,6 +2877,10 @@ class AppLocalizationsMg extends AppLocalizations {
   String get errorServer => 'Tsy azo ampiasaina vetivety ny serivisy.';
 
   @override
+  String get errorTooManyAttempts =>
+      'Be loatra ny andrana. Miandrasa minitra vitsivitsy vao manandrana indray.';
+
+  @override
   String get errorUnauthorized => 'Lany ny fotoam-pidiranao. Midira indray.';
 
   @override
@@ -3027,4 +3031,172 @@ class AppLocalizationsMg extends AppLocalizations {
 
   @override
   String get chatCall => 'Miantso';
+
+  @override
+  String get vehicleTypeVan => 'Kamiao kely';
+
+  @override
+  String get authPhoneSignInHeadline => 'Tonga soa indray !';
+
+  @override
+  String get authPhoneSignInLead =>
+      'Ampidiro ny laharanao, dia sokafy ny findainao toy ny mahazatra.';
+
+  @override
+  String get authPhoneSignUpHeadline => 'Mamorona kaonty';
+
+  @override
+  String get authPhoneSignUpLead =>
+      'Segondra 30, tsy misy SMS : ny fanidian\'ny findainao no mamantatra anao.';
+
+  @override
+  String get authPhoneCountry => '+261';
+
+  @override
+  String get authPasswordShow => 'Asehoy ny teny miafina';
+
+  @override
+  String get authPasswordHide => 'Afeno ny teny miafina';
+
+  @override
+  String get authPhoneNotRegistered =>
+      'Tsy misy kaonty amin\'io laharana io. Mamorona iray.';
+
+  @override
+  String get authPhoneTaken => 'Efa manana kaonty io laharana io. Midira.';
+
+  @override
+  String get authPhonePasswordNotSet =>
+      'Mbola tsy manana teny miafina ity kaonty ity. Midira amin\'ny mailaka na antsoy ny fanohanana.';
+
+  @override
+  String get authPhoneBadCredentials => 'Diso ny laharana na ny teny miafina';
+
+  @override
+  String get authPhoneCreateAction => 'Hamorona ny kaontiko';
+
+  @override
+  String get authPhoneSignInAction => 'Hiditra';
+
+  @override
+  String get authPhoneSwitchToSignUp =>
+      'Vaovao amin\'ny MajiChrono ? Mamorona kaonty';
+
+  @override
+  String get authPhoneSwitchToSignIn => 'Efa manana kaonty aho — hiditra';
+
+  @override
+  String get authPhoneTerms =>
+      'Raha manohy ianao dia manaiky ny fepetra fampiasana ny MajiChrono.';
+
+  @override
+  String get authPhoneCityBadge => 'Mahajanga';
+
+  @override
+  String homeHello(String name) {
+    return 'Salama, $name';
+  }
+
+  @override
+  String get homeHelloAnonymous => 'Salama !';
+
+  @override
+  String get homeActiveRide => 'Dia mandeha';
+
+  @override
+  String get homeOpenRide => 'Jereo';
+
+  @override
+  String get homeRecenter => 'Hitady ny toerako';
+
+  @override
+  String get homeSendParcel => 'Handefa fonosana';
+
+  @override
+  String get homeSendParcelHint =>
+      'Misy mpitondra entana maka sy manatitra, misy sary sy porofo fanaterana.';
+
+  @override
+  String get homeMyDeliveries => 'Ny fanaterana nataoko';
+
+  @override
+  String get homeServicesTitle => 'Inona no tianao hatao ?';
+
+  @override
+  String get deliveryVehicleTitle => 'Fiara hitondrana';
+
+  @override
+  String get vehicleMotoHint => 'Fonosana kely sy taratasy, hatramin\'ny 15 kg';
+
+  @override
+  String get vehicleTricycleHint =>
+      'Baoritra sy entana avy eny an-tsena, hatramin\'ny 30 kg';
+
+  @override
+  String get vehicleCarHint => 'Fonosana lehibe na marefo, voaaro';
+
+  @override
+  String get vehicleVanHint => 'Entana betsaka, varotra, famindrana';
+
+  @override
+  String get vehicleTooHeavy => 'Mavesatra loatra ho an\'ny moto';
+
+  @override
+  String get vehicleDispatchHint =>
+      'Vidiny raikitra. Alefa avy hatrany any amin\'ny mpitondra entana akaiky indrindra manana io fiara io ny fangatahana.';
+
+  @override
+  String get homeVehiclesTitle => 'Fiara inona ho an\'ny fonosanao ?';
+
+  @override
+  String get addrKnownPlaces => 'Toerana fanta-daza eto Mahajanga';
+
+  @override
+  String get pkgNoPhoto => 'Tsy misy sary';
+
+  @override
+  String get pkgPhotoRequired =>
+      'Ampio sary ny fonosana : fantatry ny mpitondra entana alohan\'ny hanekeny.';
+
+  @override
+  String get authDeviceLockReasonSignUp =>
+      'Hamafiso fa ianao tokoa no mamorona ny kaontinao MajiChrono';
+
+  @override
+  String get authDeviceLockReasonSignIn =>
+      'Sokafy mba hidirana ao amin\'ny MajiChrono';
+
+  @override
+  String get authDeviceLockSignUpHint =>
+      'Tsy misy SMS : hamafisinao amin\'ny fanidian\'ny findainao (kaody, sary, dian-tanana na tarehy).';
+
+  @override
+  String get authDeviceLockSignInHint =>
+      'Fantatra ity finday ity : sokafy mba hidirana.';
+
+  @override
+  String get authNewDeviceHint =>
+      'Finday vaovao : ampidiro indray mandeha ny teny miafinao, avy eo ny fanidiany no ampiasaina.';
+
+  @override
+  String get authNoDeviceLockHint =>
+      'Tsy misy fanidiana ity finday ity : misafidiana teny miafina (litera 8 farafahakeliny).';
+
+  @override
+  String get authDeviceLockCancelled =>
+      'Najanona ny fanamarinana. Andramo indray.';
+
+  @override
+  String get authDeviceNotRecognized =>
+      'Tsy fantatra intsony ity finday ity amin\'ity kaonty ity. Ampidiro ny teny miafinao.';
+
+  @override
+  String get authBackupPasswordToggle => 'Hanampy teny miafina fanampiny';
+
+  @override
+  String get authBackupPasswordHint =>
+      'Tsy voatery : ilaina raha hiditra avy amin\'ny finday hafa.';
+
+  @override
+  String get authUnlockAndEnter => 'Sokafy dia midira';
 }

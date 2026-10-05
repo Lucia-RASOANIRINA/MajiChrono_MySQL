@@ -65,7 +65,10 @@ class DifferentiatorsMockModule extends MockModule {
     });
   }
 
-  /// Reseau de points relais partenaires (differenciant D6).
+  /// Reseau de points relais partenaires (differenciant D6), a Majunga.
+  ///
+  /// Boutiques de demonstration : en production, la liste vient du reglage
+  /// `relay_points` pose par l'exploitation.
   ///
   /// Des boutiques de quartier, avec leurs vraies contraintes : horaires,
   /// poids maximal, duree de garde. Un relais qui accepterait tout ne serait
@@ -82,9 +85,9 @@ class DifferentiatorsMockModule extends MockModule {
       {
         'id': 'rel_1',
         'name': 'Epicerie Tsiky',
-        'district': 'Ambohipo',
-        'landmark': 'Portail vert, apres le pont',
-        'point': {'lat': -18.9105, 'lng': 47.5570},
+        'district': 'Mahabibo',
+        'landmark': 'Portail vert, pres du marche Morafeno',
+        'point': {'lat': -15.7158, 'lng': 46.3221},
         'openingHours': 'Lun-Sam 7h-19h',
         'phone': '+261340000011',
         'acceptsDropoff': true,
@@ -95,9 +98,9 @@ class DifferentiatorsMockModule extends MockModule {
       {
         'id': 'rel_2',
         'name': 'Quincaillerie Rary',
-        'district': 'Analakely',
-        'landmark': 'Face a l escalier, boutique bleue',
-        'point': {'lat': -18.9080, 'lng': 47.5250},
+        'district': 'Mahajanga Be',
+        'landmark': 'Pres du Bazary Be, boutique bleue',
+        'point': {'lat': -15.7229, 'lng': 46.3115},
         'openingHours': 'Lun-Ven 8h-18h',
         'phone': '+261320000022',
         'acceptsDropoff': true,
@@ -108,10 +111,10 @@ class DifferentiatorsMockModule extends MockModule {
       },
       {
         'id': 'rel_3',
-        'name': 'Kiosque Ivandry',
-        'district': 'Ivandry',
-        'landmark': 'Derriere la station, mur blanc',
-        'point': {'lat': -18.8760, 'lng': 47.5310},
+        'name': 'Kiosque Ambondrona',
+        'district': 'Ambondrona',
+        'landmark': 'Face a l universite, mur blanc',
+        'point': {'lat': -15.7016, 'lng': 46.3530},
         'openingHours': 'Tous les jours 6h-20h',
         'acceptsDropoff': false,
         'acceptsPickup': true,

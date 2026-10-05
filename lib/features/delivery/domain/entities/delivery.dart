@@ -1,6 +1,7 @@
 import 'package:majichrono/features/delivery/domain/entities/delivery_options.dart';
 import 'package:majichrono/features/delivery/domain/entities/shopping_order.dart';
 import 'package:majichrono/features/delivery/domain/entities/address.dart';
+import 'package:majichrono/features/delivery/domain/entities/delivery_vehicle.dart';
 
 /// Nature de la course (EXI-C06).
 enum DeliveryKind {
@@ -228,6 +229,7 @@ class Delivery {
     this.shopping,
     this.relayPointId,
     this.relayPickupCode,
+    this.vehicle,
   });
 
   final String id;
@@ -266,6 +268,10 @@ class Delivery {
   /// relais est choisi ; le destinataire s'en sert pour recuperer le colis.
   final String? relayPickupCode;
 
+  /// Vehicule demande, selon la taille du colis. Nul pour une course creee
+  /// avant le choix du vehicule : elle reste visible de tous les livreurs.
+  final DeliveryVehicle? vehicle;
+
   double get distanceKm => pickup.point.distanceKmTo(dropoff.point);
 
   Delivery copyWith({
@@ -295,6 +301,7 @@ class Delivery {
     shopping: shopping ?? this.shopping,
     relayPointId: relayPointId,
     relayPickupCode: relayPickupCode,
+    vehicle: vehicle,
   );
 
   Map<String, dynamic> toJson() => {
@@ -316,6 +323,7 @@ class Delivery {
     if (shopping != null) 'shopping': shopping!.toJson(),
     if (relayPointId != null) 'relayPointId': relayPointId,
     if (relayPickupCode != null) 'relayPickupCode': relayPickupCode,
+    if (vehicle != null) 'vehicle': vehicle!.wireName,
   };
 
   static Delivery? fromJson(Map<String, dynamic> json) {
@@ -348,6 +356,7 @@ class Delivery {
       ),
       relayPointId: json['relayPointId'] as String?,
       relayPickupCode: json['relayPickupCode'] as String?,
+      vehicle: DeliveryVehicle.fromWire(json['vehicle'] as String?),
     );
   }
 }

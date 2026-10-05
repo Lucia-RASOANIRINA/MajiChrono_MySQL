@@ -104,6 +104,7 @@ class _VehicleFormState extends ConsumerState<_VehicleForm> {
     VehicleType.bicycle => l10n.vehicleTypeBicycle,
     VehicleType.car => l10n.vehicleTypeCar,
     VehicleType.tricycle => l10n.vehicleTypeTricycle,
+    VehicleType.van => l10n.vehicleTypeVan,
   };
 
   (String, McStatusTone, IconData) _validationView(

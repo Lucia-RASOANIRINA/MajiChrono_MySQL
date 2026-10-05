@@ -25,12 +25,18 @@ class AppSpacing {
 class AppRadii {
   const AppRadii._();
 
-  /// 8 dp pour les composants, 16 dp pour les feuilles et cartes (§15.1).
-  static const Radius component = Radius.circular(8);
-  static const Radius sheet = Radius.circular(16);
+  /// Refonte Majunga : des formes plus douces, lisibles comme « touchables ».
+  /// 14 dp pour les composants (champs, puces), 24 dp pour les cartes, 28 dp
+  /// pour les feuilles qui montent du bas, pilule pour l'action principale.
+  static const Radius component = Radius.circular(14);
+  static const Radius card = Radius.circular(24);
+  static const Radius sheet = Radius.circular(28);
+  static const Radius pill = Radius.circular(999);
 
   static const BorderRadius componentAll = BorderRadius.all(component);
+  static const BorderRadius cardAll = BorderRadius.all(card);
   static const BorderRadius sheetAll = BorderRadius.all(sheet);
+  static const BorderRadius pillAll = BorderRadius.all(pill);
   static const BorderRadius sheetTop = BorderRadius.only(
     topLeft: sheet,
     topRight: sheet,
@@ -66,6 +72,9 @@ class AppSizes {
 
   /// Bouton de progression livreur : pleine largeur, 64 dp (§15.3).
   static const double driverActionHeight = 64;
+
+  /// Bouton d'action principale : pilule de 56 dp, a portee de pouce.
+  static const double primaryActionHeight = 56;
 
   static const double appBarHeight = 56;
   static const double bannerHeight = 32;

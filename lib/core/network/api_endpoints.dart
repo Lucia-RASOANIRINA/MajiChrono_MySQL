@@ -13,6 +13,14 @@ class ApiEndpoints {
   static const String otpRequest = '/auth/otp/request';
   static const String otpVerify = '/auth/otp/verify';
   static const String phoneLogin = '/auth/phone/login';
+
+  /// Inscription par numero et mot de passe : la porte d'entree par numero
+  /// qui ne depend d'aucun SMS.
+  static const String phoneRegister = '/auth/phone/register';
+
+  /// Lie le telephone courant au compte de la session (cle d'appareil) :
+  /// la prochaine entree se fera par le verrouillage du telephone.
+  static const String authDevices = '/auth/devices';
   static const String refresh = '/auth/refresh';
   static const String logout = '/auth/logout';
 

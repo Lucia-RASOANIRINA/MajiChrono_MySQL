@@ -7,20 +7,48 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:majichrono/core/error/failure.dart';
 import 'package:majichrono/core/map/cached_tile_provider.dart';
+import 'package:majichrono/core/map/tile_source.dart';
+import 'package:majichrono/core/settings/economy_providers.dart';
 import 'package:majichrono/core/network/api_endpoints.dart';
 import 'package:majichrono/core/network/data_meter.dart';
 import 'package:majichrono/core/network/network_profile.dart';
 import 'package:majichrono/core/providers/core_providers.dart';
 import 'package:majichrono/features/tracking/domain/entities/tracking.dart';
 
-/// Fournisseur de tuiles cartographiques, cree une seule fois.
+/// Fournisseur de tuiles cartographiques.
+///
+/// Le cache est **range par source** : une tuile d'un fournisseur n'est jamais
+/// resservie pour un autre. C'est ce qui purge les images « API KEY REQUIRED »
+/// que CARTO renvoyait en production, enregistrees comme de vraies tuiles.
+/// Les fichiers de l'ancien rangement (a plat, toutes sources melees) sont
+/// supprimes au premier lancement.
+///
+/// Le mode economie, s'il bloque les tuiles a la demande (EXI-T08), restreint
+/// la carte a ce qui est deja en cache.
 final tileProviderProvider = FutureProvider<CachedTileProvider>((ref) async {
+  final economy = ref.watch(economySettingsProvider);
   final dir = await getApplicationSupportDirectory();
+  final root = Directory(p.join(dir.path, 'map_tiles'));
+  await _purgeLegacyTiles(root);
   return CachedTileProvider(
-    cacheDirectory: Directory(p.join(dir.path, 'map_tiles')),
+    cacheDirectory: Directory(
+      p.join(root.path, TileConfig.forBuild().source.name),
+    ),
     dataMeter: ref.watch(dataMeterProvider),
+    offlineOnly: economy.enabled && economy.blockOnDemandTiles,
   );
 });
+
+Future<void> _purgeLegacyTiles(Directory root) async {
+  try {
+    if (!root.existsSync()) return;
+    for (final entity in root.listSync()) {
+      if (entity is File) await entity.delete();
+    }
+  } on FileSystemException {
+    // Un fichier qui resiste n'empeche pas la carte de s'afficher.
+  }
+}
 
 /// Suivi d'une course, rafraichi a cadence adaptative (EXI-C20).
 ///

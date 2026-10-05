@@ -177,13 +177,13 @@ void main() {
     await tester.tap(find.text('Avec mon numero'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Votre numero'), findsOneWidget);
+    expect(find.text('Bon retour !'), findsOneWidget);
 
     await tester.tap(find.text('Malagasy'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Ny laharanao'), findsOneWidget);
-    expect(find.text('Votre numero'), findsNothing);
+    expect(find.text('Tonga soa indray !'), findsOneWidget);
+    expect(find.text('Bon retour !'), findsNothing);
   });
 
   testWidgets('une session sans profil mene au choix de profil (EXI-T02)',

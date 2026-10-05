@@ -8,13 +8,13 @@
       de fond d'icone : le bleu de l'ecran transparait a la place, si bien
       qu'aucune pastille ronde n'apparait autour du logo.
     -->
-    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+    <style name="LaunchTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@drawable/launch_background</item>
         <item name="android:windowSplashScreenBackground">@color/brand_blue</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
     </style>
 
-    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+    <style name="NormalTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
 </resources>

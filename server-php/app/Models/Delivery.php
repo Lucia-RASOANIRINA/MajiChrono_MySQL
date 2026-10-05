@@ -18,6 +18,7 @@ class Delivery extends Model
         'dropoff_json', 'package_json', 'price_ariary', 'distance_km', 'cancel_reason',
         'cancel_fee_ariary', 'relay_point_id', 'relay_pickup_code', 'payer',
         'shopping_json', 'tracking_token', 'created_at', 'updated_at',
+        'vehicle',
     ];
 
     protected function casts(): array
@@ -52,16 +53,44 @@ class Delivery extends Model
         return is_array($value) ? $value : ['summary' => $fallback];
     }
 
+    /**
+     * Code de suivi a communiquer au destinataire : `MC-<course>-<controle>`.
+     *
+     * Le numero de course seul se devinerait (MC-1, MC-2...) et livrerait le
+     * statut et le quartier de toutes les livraisons. Les six caracteres de
+     * controle sont une signature HMAC de la course par la cle de
+     * l'application : sans elle, il faut essayer ~2 milliards de codes par
+     * course, a 30 essais par minute.
+     */
     public function publicTrackingCode(): ?string
     {
         if (! is_numeric($this->id)) {
             return null;
         }
 
-        $encoded = strtoupper(base_convert((string) $this->id, 10, 36));
-        $code = str_pad(substr($encoded, -6), 6, '0', STR_PAD_LEFT);
+        return 'MC-'.strtoupper(base_convert((string) $this->id, 10, 36)).'-'.self::trackingCheck((string) $this->id);
+    }
 
-        return 'MC-'.substr($code, 0, 4).'-'.substr($code, 4);
+    public static function trackingCheck(string $id): string
+    {
+        $mac = hash_hmac('sha256', 'track:'.$id, (string) config('app.key'));
+        $value = strtoupper(base_convert(substr($mac, 0, 12), 16, 36));
+
+        return substr(str_pad($value, 6, '0', STR_PAD_LEFT), -6);
+    }
+
+    /** Course designee par un code de suivi, ou null si le code est faux. */
+    public static function findByTrackingCode(string $code): ?self
+    {
+        if (preg_match('/^MC-([A-Z0-9]{1,10})-([A-Z0-9]{6})$/', strtoupper(trim($code)), $m) !== 1) {
+            return null;
+        }
+        $id = base_convert(strtolower($m[1]), 36, 10);
+        if (! hash_equals(self::trackingCheck($id), $m[2])) {
+            return null;
+        }
+
+        return self::find($id);
     }
 
     public function jsonPayload(): array
@@ -78,6 +107,8 @@ class Delivery extends Model
             'cancelled' => 'annulee',
             'failed' => 'refusee',
         ][$this->status] ?? $this->status;
+
+        $driver = $this->driver_id === null ? null : Account::find($this->driver_id);
 
         return [
             'id' => (string) $this->id,
@@ -96,6 +127,9 @@ class Delivery extends Model
             'relayPickupCode' => $this->relay_pickup_code,
             'payer' => $this->payer,
             'shopping' => $this->shopping_json ? json_decode($this->shopping_json, true) : null,
+            'vehicle' => $this->vehicle,
+            // Nom du livreur assigne : la fiche du suivi l'affiche (EXI-C22).
+            'driverName' => $driver?->resolvedDisplayName(),
             'trackingToken' => $this->tracking_token,
             'trackingCode' => $this->publicTrackingCode(),
             'createdAt' => optional($this->created_at)->toIso8601String(),

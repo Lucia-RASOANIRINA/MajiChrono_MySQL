@@ -2,6 +2,7 @@ import 'package:majichrono/features/delivery/domain/entities/delivery_options.da
 import 'package:majichrono/features/delivery/domain/entities/shopping_order.dart';
 import 'package:majichrono/features/delivery/domain/entities/address.dart';
 import 'package:majichrono/features/delivery/domain/entities/delivery.dart';
+import 'package:majichrono/features/delivery/domain/entities/delivery_vehicle.dart';
 
 /// Brouillon de course, tel que le construit l'assistant de creation.
 class DeliveryDraft {
@@ -16,6 +17,8 @@ class DeliveryDraft {
     this.payer = Payer.sender,
     this.shopping,
     this.relayPointId,
+    this.vehicle,
+    this.priceAriary,
   });
 
   final Address pickup;
@@ -30,6 +33,13 @@ class DeliveryDraft {
   final Payer payer;
   final ShoppingOrder? shopping;
   final String? relayPointId;
+
+  /// Vehicule choisi selon la taille du colis : la demande ne part qu'aux
+  /// livreurs qui en sont equipes.
+  final DeliveryVehicle? vehicle;
+
+  /// Prix fixe annonce avant la commande. Le serveur le recalcule et fait foi.
+  final int? priceAriary;
 }
 
 abstract interface class DeliveryRepository {

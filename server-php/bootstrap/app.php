@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -19,7 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Plafond general par session (limiteur `api`, AppServiceProvider) ;
+        // les routes d'authentification ont en plus leurs propres plafonds.
+        $middleware->throttleApi('api');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Meme format d'erreur pour tout le monde : {"error": {...}}.
@@ -33,6 +36,30 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
+        // Route inconnue, methode refusee, trop de requetes... : toujours le
+        // meme moule JSON, jamais la page HTML de Laravel.
+        $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
+            $status = $e->getStatusCode();
+            [$code, $message] = match ($status) {
+                404 => ['not_found', 'Ressource introuvable'],
+                405 => ['method_not_allowed', 'Methode non autorisee'],
+                429 => ['too_many_requests', 'Trop de tentatives, reessayez dans un moment'],
+                503 => ['unavailable', 'Service momentanement indisponible'],
+                default => ['http_'.$status, 'Requete refusee'],
+            };
+            $details = [];
+            $retryAfter = $e->getHeaders()['Retry-After'] ?? null;
+            if ($retryAfter !== null) {
+                $details['retryAfterSeconds'] = (int) $retryAfter;
+            }
+
+            return response()->json(
+                ['error' => ['code' => $code, 'message' => $message] + ($details ? ['details' => $details] : [])],
+                $status,
+                $e->getHeaders(),
+            );
+        });
+
         $exceptions->render(function (ValidationException $e, Request $request) {
             return response()->json([
                 'error' => [
@@ -41,5 +68,14 @@ return Application::configure(basePath: dirname(__DIR__))
                     'details' => ['fields' => $e->errors()],
                 ],
             ], 422);
+        });
+
+        // Erreur imprevue : un 500 JSON sans trace (la trace va au journal).
+        $exceptions->render(function (Throwable $e, Request $request) {
+            if (config('app.debug')) {
+                return null;
+            }
+
+            return response()->json(['error' => ['code' => 'server_error', 'message' => 'Erreur interne']], 500);
         });
     })->create();

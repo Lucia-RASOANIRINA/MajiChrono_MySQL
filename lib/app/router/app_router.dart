@@ -36,7 +36,8 @@ import 'package:majichrono/features/driver/presentation/screens/driver_deliverie
 import 'package:majichrono/features/driver/presentation/screens/earnings_screen.dart';
 import 'package:majichrono/features/profile/presentation/profile_screen.dart';
 import 'package:majichrono/features/driver/presentation/screens/kyc_screen.dart';
-import 'package:majichrono/features/home/presentation/socle_home_screen.dart';
+import 'package:majichrono/features/home/presentation/client_home_screen.dart';
+import 'package:majichrono/features/delivery/domain/entities/delivery_vehicle.dart';
 import 'package:majichrono/features/tracking/presentation/screens/public_tracking_screen.dart';
 import 'package:majichrono/features/tracking/presentation/screens/tracking_screen.dart';
 import 'package:majichrono/features/settings/presentation/data_usage_screen.dart';
@@ -350,11 +351,17 @@ StatefulShellRoute _clientShell() => StatefulShellRoute.indexedStack(
       routes: [
         GoRoute(
           path: AppRoutes.clientHome,
-          builder: (_, _) => const SocleHomeScreen(role: UserRole.client),
+          builder: (_, _) => const ClientHomeScreen(),
           routes: [
+
             GoRoute(
               path: 'new',
-              builder: (_, _) => const CreateDeliveryScreen(),
+              // Le vehicule touche sur l'accueil voyage dans `extra`.
+              builder: (context, state) => CreateDeliveryScreen(
+                initialVehicle: state.extra is DeliveryVehicle
+                    ? state.extra! as DeliveryVehicle
+                    : DeliveryVehicle.moto,
+              ),
             ),
             GoRoute(
               path: 'track/:id',

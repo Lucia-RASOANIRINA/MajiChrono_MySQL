@@ -47,13 +47,19 @@ class McStatusBadge extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: ink),
           const SizedBox(width: AppSpacing.xs),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.1,
-              fontWeight: FontWeight.w600,
-              color: ink,
+          // Le libelle cede la place s'il le faut (points de suspension) :
+          // un statut long ne doit pas pousser le prix hors de la carte.
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.1,
+                fontWeight: FontWeight.w600,
+                color: ink,
+              ),
             ),
           ),
         ],

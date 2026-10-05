@@ -68,6 +68,7 @@ Failure mapDioException(Object error, [StackTrace? stackTrace]) {
     ),
     409 => ConflictFailure(
       currentState: apiDetails?['currentState'] as String?,
+      code: code,
       cause: error,
       stackTrace: stackTrace,
       details: details,

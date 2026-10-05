@@ -9,6 +9,9 @@ extension FailureL10n on Failure {
   String localizedMessage(AppLocalizations l10n) => switch (this) {
     NetworkFailure() => l10n.errorNetwork,
     TimeoutFailure() => l10n.errorTimeout,
+    // Plafond d'essais (mot de passe, envoi de code) : ce n'est pas une panne,
+    // il suffit d'attendre un peu.
+    ServerFailure(statusCode: 429) => l10n.errorTooManyAttempts,
     ServerFailure() => l10n.errorServer,
     UnauthorizedFailure() => l10n.errorUnauthorized,
     ConflictFailure() => l10n.errorConflict,

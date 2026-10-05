@@ -271,7 +271,10 @@ enum VehicleType {
   moto('moto'),
   bicycle('bicycle'),
   car('car'),
-  tricycle('tricycle');
+  tricycle('tricycle'),
+
+  /// Camionnette : gros volumes, marchandises, demenagement.
+  van('van');
 
   const VehicleType(this.wireName);
 

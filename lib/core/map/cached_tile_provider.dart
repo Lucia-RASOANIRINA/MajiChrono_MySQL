@@ -34,7 +34,9 @@ class CachedTileProvider extends TileProvider {
     this.maxAge = const Duration(days: 30),
     this.offlineOnly = false,
     HttpClient? httpClient,
-  }) : _client = httpClient ?? HttpClient();
+  }) : _client =
+           (httpClient ?? HttpClient())
+             ..connectionTimeout = const Duration(seconds: 10);
 
   final Directory cacheDirectory;
   final DataMeter dataMeter;

@@ -11,6 +11,10 @@ class GeoPoint {
   /// disponible — phase 1 du deploiement (§2.1).
   static const GeoPoint antananarivo = GeoPoint(-18.8792, 47.5079);
 
+  /// Centre de Majunga (Mahajanga), ville de deploiement de MajiChrono : repli
+  /// de la carte quand aucune position n'est encore connue.
+  static const GeoPoint mahajanga = GeoPoint(-15.7167, 46.3167);
+
   bool get isInMadagascar =>
       latitude >= -26 &&
       latitude <= -11 &&

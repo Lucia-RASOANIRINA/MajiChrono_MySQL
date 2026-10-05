@@ -55,7 +55,7 @@ flutter run --dart-define=API_MODE=mock
 
 # Backend réel hébergé (mode par défaut)
 flutter run --dart-define=API_MODE=live \
-            --dart-define=API_BASE_URL=https://majichrono.majitech.mg/api/v1
+            --dart-define=API_BASE_URL=https://majichrono.majitech.mg/mobile-api
 ```
 
 ### Vérifier
@@ -142,10 +142,9 @@ lib/
 ## 4. Les backends et le déploiement
 
 Le backend actuellement destiné au mobile et déployé sur DirectAdmin est
-Laravel/PHP dans [`server-php/`](./server-php/). Le backend Python dans
-[`server/`](./server/) reste une référence de simulation et de compatibilité
-pour les scénarios hors ligne ; il ne doit pas être utilisé comme indication de
-l'URL de production.
+Laravel/PHP dans [`server-php/`](./server-php/). C'est le seul backend du
+projet : l'ancien backend Python (FastAPI) a été retiré. Pour travailler sans
+serveur, l'application embarque un backend simulé (voir plus bas).
 
 ### Backend Laravel (production mobile)
 
@@ -163,8 +162,48 @@ domains/majichrono.majitech.mg/public_html/mobile-api/
 ```
 
 Le ZIP contient directement `index.php`, `.htaccess`, `app/`, `routes/` et
-`vendor/`. Après déploiement, vérifier `/health`, `/health/ready`, puis les
-parcours authentifiés avec un compte de préproduction.
+`vendor/`, sans les dépendances de développement. Il est produit par
+`server-php/build-deploy-zip.ps1`. Les dossiers internes et les fichiers de la
+racine (`.env`, `composer.*`, `artisan`) sont protégés par `.htaccess` :
+`/mobile-api/.env` doit répondre 403.
+
+Après chaque déploiement :
+
+1. appliquer les migrations : `php artisan migrate --force` ;
+2. vérifier `/health`, puis `/health/ready` (`"status":"ready"`) ;
+3. vérifier qu'un fichier interne est refusé :
+   `curl -s -o /dev/null -w "%{http_code}" https://majichrono.majitech.mg/mobile-api/.env`
+   doit afficher `403` ;
+4. dérouler les parcours authentifiés avec un compte de préproduction.
+
+Points de configuration de production (`.env.production`) :
+
+- `MAJIPAY_SANDBOX=false`. Les portefeuilles MajiPay de démonstration ne sont
+  jamais crédités en production. Un règlement sans solde échoue proprement et
+  bascule en espèces.
+- `JWT_SECRET` a été renouvelé le 3 octobre 2026. Au premier déploiement
+  qui l'embarque, chaque utilisateur se reconnecte une fois.
+- Les points relais viennent du réglage `relay_points`, posé par un
+  administrateur via `PUT /admin/settings/relay_points`. Sa valeur est un
+  tableau JSON de relais (`id`, `name`, `district`, `landmark`, `point`,
+  `openingHours`, `phone`, `acceptsDropoff`, `acceptsPickup`, `maxWeightKg`,
+  `storageDays`). Sans réglage, aucun relais n'est proposé.
+- **Pare-feu de l'hébergeur.** Il bloque une IP après une rafale de requêtes.
+  À Majunga, beaucoup d'abonnés mobiles sortent par la même IP (CGNAT). Le
+  seuil doit donc rester large, car l'API limite déjà elle-même les essais
+  (voir ci-dessous).
+
+Limites de requêtes appliquées par l'API (réponse 429
+`too_many_requests` ou `too_many_attempts`) :
+
+| Usage | Plafond |
+|---|---|
+| Connexion (mot de passe, clé d'appareil, vérification de code) | 10/min par identifiant, 60/min par IP |
+| Échecs de mot de passe | 5 par identifiant, blocage 15 min |
+| Envoi d'un code SMS ou e-mail | 3 par quart d'heure et par destination, 30/h par IP |
+| Inscription, rafraîchissement de session | 30/min par IP |
+| Suivi public, formulaire de contact | 30/min par IP |
+| Reste de l'API | 300/min par session |
 
 Les rapports d'exploitation sont exportables par un administrateur avec :
 
@@ -190,6 +229,122 @@ Avant publication, exécuter sur un appareil Android physique :
 Chaque scénario doit être contrôlé avec les journaux de synchronisation et
 l'absence de doublons côté serveur.
 
+### Livraison rapide à Majunga : véhicule, prix fixe, attribution immédiate
+
+MajiChrono est une plateforme de **livraison uniquement**, entre un client
+expéditeur et un livreur. Elle dessert **Majunga (Mahajanga) et ses environs,
+dans un rayon de 25 km**.
+
+D'inDrive, elle ne reprend que la **rapidité** :
+
+1. **Choisir le véhicule selon la taille du colis.** Quatre véhicules sont
+   proposés : moto (jusqu'à 15 kg), tricycle ou bajaj (jusqu'à 30 kg), voiture
+   (colis volumineux ou fragiles) et camionnette (gros volumes). Un véhicule
+   est proposé d'office d'après le poids déclaré. La moto est refusée au-delà
+   de 15 kg.
+2. **Voir un prix fixe avant de commander.** Chaque véhicule a sa grille :
+   prise en charge, prix au kilomètre et minimum, auxquels s'ajoutent les
+   suppléments existants (poids, nature du colis, créneau programmé,
+   assurance). Le mobile (`DeliveryVehicle`) et Laravel
+   (`App\Support\DeliveryFare`) appliquent la même formule. Le serveur
+   recalcule le prix et fait foi ; un prix envoyé par le téléphone n'est
+   jamais repris tel quel.
+3. **Attribuer la course immédiatement.** La demande n'est proposée qu'aux
+   livreurs en ligne équipés du bon véhicule, les plus proches du point de
+   retrait en premier. Le premier qui accepte prend la course.
+
+| Véhicule | Prise en charge | Par km | Minimum |
+|---|---|---|---|
+| Moto | 2 000 Ar | 800 Ar | 2 000 Ar |
+| Tricycle (bajaj) | 3 000 Ar | 1 000 Ar | 3 000 Ar |
+| Voiture | 5 000 Ar | 1 200 Ar | 5 000 Ar |
+| Camionnette | 15 000 Ar | 2 500 Ar | 15 000 Ar |
+
+Ces montants sont provisoires, en attendant l'arbitrage DO-3.
+
+Pour gagner du temps à la saisie, le formulaire d'adresse propose aussi les
+lieux connus de Majunga : un toucher remplit le point GPS, le quartier et le
+repère. Après une commande en ligne, l'application ouvre directement le suivi,
+qui affiche « En attente d'un livreur », puis l'approche du livreur.
+
+Règles appliquées par le serveur :
+
+- **Avancement.** Le livreur assigné mène la course du départ à la remise.
+  Le client ne peut que confirmer la réception une fois le livreur arrivé.
+  « Acceptée » s'obtient seulement par l'acceptation, ou par une
+  réaffectation de l'exploitation.
+- **Acceptation.** Le livreur doit être en ligne, validé et équipé du bon
+  véhicule. Un livreur sans véhicule déclaré ne reçoit aucune course.
+  L'attribution est atomique : deux livreurs qui acceptent à la même seconde
+  ne peuvent pas obtenir la même course.
+- **Avant acceptation**, le livreur voit le trajet et le colis, mais pas les
+  numéros de contact.
+- **Annulation.**
+  - Le livreur qui renonce avant la prise en charge rend la course, qui
+    repart aux autres livreurs.
+  - Le client annule sans frais pendant 3 minutes après l'acceptation.
+    Ensuite, les frais valent 20 % du prix, avec un minimum de 1 000 Ar.
+- **Paiement.**
+  - Le montant est le prix fixe de la course, et une course se règle une
+    seule fois.
+  - Confirmer deux fois ne débite qu'une fois.
+  - Un retrait ne dépasse jamais le solde.
+- **Suivi public.** Le code `MC-<course>-<contrôle>` est signé et ne se devine
+  pas. Il donne le statut et le quartier, jamais l'adresse.
+- **Terrain.** Le serveur enregistre l'alerte SOS (`/drivers/emergency`) et
+  prévient chaque administrateur. Les constats de prise en charge et de
+  remise (`/deliveries/{id}/custody/...`) sont vérifiés par empreinte et
+  chaînés. La trace en direct (`/deliveries/{id}/trace`) ne montre le livreur
+  que pendant la course. La réaffectation (`/admin/deliveries/{id}/reassign`)
+  exige un motif.
+
+Après déploiement du code, appliquer les migrations : `vehicle` sur
+`deliveries`, la table `device_credentials`, puis les tables
+`emergency_alerts` et `custody_reports`.
+
+```text
+php artisan migrate --force
+```
+
+### Fond de carte
+
+La carte utilise les tuiles d'OpenStreetMap, gardées 30 jours dans un cache
+disque de 150 Mo. Le 2 octobre 2026, elles ont été vérifiées pour Majunga,
+avec l'identifiant de l'application. Chaque carte affiche la mention
+« © OpenStreetMap », exigée par la licence.
+
+- **CARTO** exige désormais une clé. Sans clé, chaque tuile est remplacée par
+  une image « API KEY REQUIRED ». Cette source n'est donc plus utilisée.
+- **Pour un trafic important**, fournissez une clé MapTiler à la
+  compilation : `--dart-define=MAP_TILES_KEY=...`. La politique d'usage du
+  serveur OpenStreetMap ne convient pas à une forte charge.
+- **En mode économie**, si l'option « tuiles à la demande » est désactivée,
+  la carte se limite aux tuiles déjà en cache.
+
+### Entrée par numéro de téléphone
+
+Le numéro fonctionne **sans SMS**. À l'inscription, le téléphone demande son
+propre verrouillage (code, schéma, empreinte ou visage), puis crée une clé
+secrète. Il la garde dans son stockage sécurisé et la confie au serveur
+(`POST /auth/phone/register`), qui n'en conserve que l'empreinte. Se connecter
+consiste à déverrouiller le téléphone pour présenter cette clé
+(`POST /auth/phone/login`).
+
+Le mot de passe sert de secours. Il est obligatoire si le téléphone n'a aucun
+verrouillage. Sur un nouveau téléphone, il est demandé une fois, puis ce
+téléphone est lié au compte (`POST /auth/devices`). Changer de mot de passe
+ferme les autres sessions. Une réinitialisation ferme toutes les sessions et
+délie tous les téléphones. Le champ du numéro affiche un préfixe `+261` fixe
+et ajoute les espaces automatiquement (`34 12 345 67`). Il accepte aussi un
+numéro collé sous la forme `034…`, `+261…` ou `00261…`.
+
+Tant que `SMS_ENABLED` vaut `false` (valeur par défaut), l'API n'envoie jamais
+de code OTP. Elle répond `phone_not_registered` (404) pour un numéro inconnu et
+`password_not_set` (409) pour un ancien compte sans mot de passe. Le numéro
+d'un compte créé ainsi reste **non vérifié** (`phone_verified_at` nul) jusqu'au
+branchement d'une passerelle SMS. Il faudra alors passer `SMS_ENABLED=true` et
+implémenter `App\Support\SmsSender`.
+
 ### Messagerie et push
 
 La messagerie serveur supporte désormais :
@@ -213,22 +368,11 @@ configuré hors Git côté Laravel. Sans ce compte, l'application conserve le
 transport de notifications locales et l'API ne doit pas être considérée comme
 un push distant actif.
 
-### Backend Python de référence
+### Le backend simulé (mode `mock`)
 
-Le contrat historique et le backend de simulation sont disponibles sous
-`server/`. Cette variante utilise MySQL fourni par XAMPP :
-
-```text
-DATABASE_URL=mysql+pymysql://root:@127.0.0.1:3306/majichrono_mysql
-```
-
-Lancez MySQL depuis XAMPP, créez la base avec
-`server/tools/setup_mysql_xampp.ps1`, puis démarrez l'API depuis `server/`.
-Le schéma SQLAlchemy est créé automatiquement au démarrage. Les tests utilisent
-SQLite en mémoire afin de rester rapides et isolés.
-
-Cette copie est volontairement séparée du projet PostgreSQL d'origine :
-`D:\MajiChrono_MySQL`.
+Lancée avec `--dart-define=API_MODE=mock`, l'application n'appelle aucun
+serveur : chaque module métier enregistre ses routes simulées dans
+`MockBackend`.
 
 Le point important est l'endroit où la simulation se branche. `MockHttpAdapter`
 remplace le `HttpClientAdapter` de dio, c'est-à-dire l'octet qui part sur le
@@ -487,6 +631,27 @@ géolocalisé, photographié et signé par les deux parties.
 
 ---
 
+### Publier l'application Android
+
+Le Play Store exige une clé de signature propre à MajiChrono. Créez-la une
+fois et gardez-la hors du dépôt : la perdre empêche toute mise à jour.
+
+```bash
+keytool -genkey -v -keystore android/majichrono-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias majichrono
+```
+
+Décrivez-la ensuite dans `android/key.properties`, que Git ignore :
+
+```text
+storeFile=majichrono-release.jks
+storePassword=...
+keyAlias=majichrono
+keyPassword=...
+```
+
+Sans ce fichier, `flutter build apk --release` signe avec la clé de debug.
+L'APK s'installe pour essai, mais le Play Store le refuse.
+
 ## 8. Tests
 
 | Suite | Ce qu'elle verrouille |
@@ -554,13 +719,10 @@ développement mobile.
 
 ## Déploiement de l'API
 
-Le serveur se déploie dans DirectAdmin via **Setup Python App**. Sélectionnez
-Python 3.12, le dossier `server/` et le fichier de démarrage
-`passenger_wsgi.py`, puis installez `requirements.txt`. Renseignez dans le
-panneau `ENVIRONMENT=prod`, `JWT_SECRET`, les paramètres `DB_*` de MySQL/MariaDB
-et les paramètres SMTP. `/health` vérifie la vivacité de l'API.
-
-Pour un déploiement manuel : `cd server && python -m venv .venv && pip install -r requirements.txt && uvicorn app.main:app`.
+L'API Laravel se déploie sur DirectAdmin. Construire l'archive avec
+`server-php/build-deploy-zip.ps1`, qui produit `server-php/laravel-deploy.zip`
+(voir §4), l'extraire dans `public_html/mobile-api/`, puis lancer
+`php artisan migrate --force`. `/health` vérifie la vivacité de l'API.
 
 ---
 
@@ -624,7 +786,6 @@ Pour un déploiement manuel : `cd server && python -m venv .venv && pip install 
 ### Serveur et exploitation
 
 - **Laravel/PHP** : API mobile actuellement déployée.
-- **Python 3.12 + FastAPI** : backend de référence et simulation historique.
 - **MySQL/MariaDB** : base partagée.
 - **bcrypt et JWT** : compatibilité d'authentification.
 - **DirectAdmin/Passenger** : hébergement de l'API Laravel.
@@ -657,22 +818,15 @@ Les tables principales utilisées par l'API sont :
 
 ## 14. Comptes de test
 
-Les comptes ci-dessous sont créés par `server/app/tools/seed_test_data.py`.
-Ils utilisent des données fictives et ne doivent pas être utilisés en production.
+En mode `mock`, ces comptes de démonstration sont disponibles. Ils se
+connectent par numéro et mot de passe `majichrono` :
 
-| Profil | Téléphone | E-mail | Accès |
-|---|---|---|---|
-| Client — Rina Rakoto | `+261340000001` | `rina.client@example.mg` | OTP téléphone |
-| Livreur — Tovo Livreur | `+261330000002` | `tovo.driver@example.mg` | OTP téléphone ; KYC approuvé |
-| Client e-mail — Compte Test | `+261340000003` | `test.client@majichrono.mg` | Mot de passe : `MajiTest2026!` |
+| Profil | Téléphone |
+|---|---|
+| Client — Hery Rakoto | `034 00 000 01` |
+| Livreur — Naina Andria (KYC approuvé) | `033 00 000 02` |
+| Exploitation — Miora Rasoa | `032 00 000 03` |
 
-Pour créer ou actualiser les données :
-
-```bash
-cd server
-.venv\Scripts\python -m app.tools.seed_test_data
-```
-
-Les comptes téléphone reçoivent un OTP via le fournisseur SMS configuré. En
-production, `OTP_DEBUG_CODES=false` doit rester désactivé ; sans fournisseur
-SMS, aucun code de test ne doit être affiché dans l'application.
+En mode `live`, créez les comptes depuis l'application (« Créer mon compte »).
+Les comptes d'exploitation sont attribués côté serveur. Ils ne doivent jamais
+être réutilisés en production.

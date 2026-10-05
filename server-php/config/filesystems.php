@@ -33,7 +33,9 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Jamais servi par HTTP : les fichiers prives (KYC...) passent par les
+            // controleurs, qui verifient qui les demande.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

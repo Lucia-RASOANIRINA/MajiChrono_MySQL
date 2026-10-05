@@ -51,8 +51,62 @@ try {
         -replace "__DIR__\.'/\.\./bootstrap/app\.php'", "__DIR__.'/bootstrap/app.php'" `
         | Set-Content $indexPath -NoNewline
 
+    # Fichiers de la racine qui ne doivent jamais etre servis : le .env porte
+    # le mot de passe de la base et le secret des jetons. Le .htaccess de
+    # Laravel ne route vers index.php que les chemins qui n'existent pas sur
+    # disque ; un fichier present serait donc servi tel quel sans cette regle.
+    $guard = @"
+
+# --- MajiChrono : fichiers internes jamais servis -------------------------
+<FilesMatch "^(\.env.*|composer\.(json|lock)|artisan|package(-lock)?\.json|phpunit\.xml.*|.*\.(log|sqlite|md|ps1|sh))$">
+    Require all denied
+</FilesMatch>
+<IfModule mod_rewrite.c>
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+</IfModule>
+"@
+    Add-Content -Path (Join-Path $staging '.htaccess') -Value $guard
+
+    # Caches generes localement : on repart de zero.
+    Get-ChildItem (Join-Path $staging 'bootstrap/cache') -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -ne '.gitignore' } | Remove-Item -Force
+
+    # Dependances de developpement (phpunit, mockery...) : inutiles en ligne,
+    # et autant de code expose en moins.
+    if (Get-Command composer -ErrorAction SilentlyContinue) {
+        Push-Location $staging
+        try {
+            composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --quiet
+            if ($LASTEXITCODE -ne 0) { throw "composer install --no-dev a echoue" }
+        } finally {
+            Pop-Location
+        }
+    } else {
+        Write-Warning "composer introuvable : vendor/ part avec les dependances de developpement."
+    }
+
+    # Manifestes de paquets regeneres pour CE vendor/ et livres dans le zip.
+    # Indispensable : le serveur garde sinon son ancien bootstrap/cache, qui
+    # cite des paquets de developpement (Pail, Sail, Collision) absents
+    # d'un vendor/ --no-dev. Chaque requete echouait alors en 500 avec
+    # « Class Laravel\Pail\PailServiceProvider not found ».
+    Push-Location $staging
+    try {
+        php artisan package:discover --no-interaction | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "package:discover a echoue" }
+    } finally {
+        Pop-Location
+    }
+    foreach ($manifest in @('packages.php', 'services.php')) {
+        $path = Join-Path $staging "bootstrap/cache/$manifest"
+        if (-not (Test-Path $path)) { throw "bootstrap/cache/$manifest manquant" }
+        if (Select-String -Path $path -Pattern 'PailServiceProvider|SailServiceProvider|CollisionServiceProvider' -Quiet) {
+            throw "bootstrap/cache/$manifest cite encore un paquet de developpement"
+        }
+    }
+
     # Dossiers qui ne doivent jamais etre servis directement.
-    $denied = @('app', 'bootstrap', 'config', 'database', 'routes', 'storage', 'vendor')
+    $denied = @('app', 'bootstrap', 'config', 'database', 'resources', 'routes', 'storage', 'vendor')
     foreach ($dir in $denied) {
         $dirPath = Join-Path $staging $dir
         if (Test-Path $dirPath) {
@@ -60,10 +114,7 @@ try {
         }
     }
 
-    # Cache Laravel vide au depart : bootstrap/cache doit rester ecrivable,
-    # mais son contenu genere localement n'a pas a etre uploade.
-    Get-ChildItem (Join-Path $staging 'bootstrap/cache') -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -ne '.gitignore' } | Remove-Item -Force
+    # Journaux locaux : jamais uploades.
     Get-ChildItem (Join-Path $staging 'storage/logs') -File -ErrorAction SilentlyContinue |
         Where-Object { $_.Name -ne '.gitignore' } | Remove-Item -Force
 

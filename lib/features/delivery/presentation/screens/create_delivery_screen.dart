@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -6,15 +7,19 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:majichrono/app/app.dart';
+import 'package:majichrono/app/router/app_routes.dart';
 import 'package:majichrono/app/theme/app_colors.dart';
 import 'package:majichrono/app/theme/design_tokens.dart';
 import 'package:majichrono/core/error/failure.dart';
+import 'package:majichrono/core/providers/core_providers.dart';
 import 'package:majichrono/features/delivery/domain/entities/address.dart';
 import 'package:majichrono/features/delivery/domain/entities/delivery.dart';
 import 'package:majichrono/features/delivery/domain/entities/delivery_options.dart';
 import 'package:majichrono/features/delivery/domain/entities/price_estimate.dart';
 import 'package:majichrono/features/delivery/domain/entities/shopping_order.dart';
 import 'package:majichrono/features/delivery/presentation/widgets/delivery_options_step.dart';
+import 'package:majichrono/features/delivery/presentation/widgets/vehicle_picker.dart';
+import 'package:majichrono/features/delivery/domain/entities/delivery_vehicle.dart';
 import 'package:majichrono/features/delivery/domain/repositories/delivery_repository.dart';
 import 'package:majichrono/features/delivery/presentation/providers/delivery_providers.dart';
 import 'package:majichrono/features/delivery/presentation/screens/address_book_screen.dart'
@@ -25,7 +30,13 @@ import 'package:majichrono/l10n/app_localizations.dart';
 import 'package:majichrono/shared/l10n/failure_messages.dart';
 
 class CreateDeliveryScreen extends ConsumerStatefulWidget {
-  const CreateDeliveryScreen({super.key});
+  const CreateDeliveryScreen({
+    this.initialVehicle = DeliveryVehicle.moto,
+    super.key,
+  });
+
+  /// Vehicule touche sur l'accueil : l'assistant s'ouvre deja reglé dessus.
+  final DeliveryVehicle initialVehicle;
 
   @override
   ConsumerState<CreateDeliveryScreen> createState() =>
@@ -39,6 +50,7 @@ class _CreateDeliveryScreenState extends ConsumerState<CreateDeliveryScreen> {
   Address? _dropoff;
   DeliveryKind _kind = DeliveryKind.standard;
   WeightCategory _weight = WeightCategory.upTo2;
+  late DeliveryVehicle _vehicle = widget.initialVehicle;
   PickupSlot _slot = const PickupSlot.immediate();
   PaymentMethod _payment = PaymentMethod.cash;
   final TextEditingController _value = TextEditingController();
@@ -121,14 +133,22 @@ class _CreateDeliveryScreenState extends ConsumerState<CreateDeliveryScreen> {
       _pickup != null &&
           _dropoff != null &&
           _pickup!.point.distanceKmTo(_dropoff!.point) >= 0.05,
-    1 => true,
+    // Photo du colis obligatoire (EXI-C09) : c'est elle que le livreur voit
+    // avant d'accepter. Hors ligne, l'envoi de la photo est impossible ; la
+    // course reste alors creable, pour ne pas bloquer le mode hors ligne.
+    1 => !_uploadingPhoto && (_photoId != null || !_online),
     2 => _shopping?.isComplete ?? true,
     _ => true,
   };
 
-  PriceEstimate get _estimate => ref
-      .read(tariffGridProvider)
-      .estimate(
+  bool get _online =>
+      ref.read(networkStatusProvider).valueOrNull?.isOnline ?? true;
+
+  PriceEstimate get _estimate => _estimateFor(_vehicle);
+
+  /// Prix fixe d'un vehicule pour le trajet saisi, options comprises.
+  PriceEstimate _estimateFor(DeliveryVehicle vehicle) =>
+      vehicle.tariff.estimate(
         straightLineKm: _pickup!.point.distanceKmTo(_dropoff!.point),
         kind: _kind,
         weight: _weight,
@@ -169,10 +189,21 @@ class _CreateDeliveryScreenState extends ConsumerState<CreateDeliveryScreen> {
               payer: _payer,
               shopping: _shopping,
               relayPointId: _relayPointId,
+              vehicle: _vehicle,
+              priceAriary: _estimate.totalAriary,
             ),
           );
 
-      router.pop();
+      // Commande confirmee en ligne : on enchaine sur le suivi, qui montre la
+      // recherche du livreur puis son approche. Hors ligne, la course est en
+      // file et l'on revient a la liste, qui l'affiche « en attente d'envoi ».
+      if (delivery.pendingSync) {
+        router.pop();
+      } else {
+        unawaited(
+          router.pushReplacement(AppRoutes.clientTracking(delivery.id)),
+        );
+      }
       // Le formulaire est retire de l'arbre au retour : le message doit etre
       // emis par le messenger racine pour rester visible sur la liste.
       MajiChronoApp.messengerKey.currentState
@@ -210,6 +241,9 @@ class _CreateDeliveryScreenState extends ConsumerState<CreateDeliveryScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    // Reconstruit l'ecran quand le reseau change : la regle de la photo
+    // obligatoire en depend.
+    ref.watch(networkStatusProvider);
 
     final titles = [
       l10n.stepAddresses,
@@ -303,7 +337,18 @@ class _CreateDeliveryScreenState extends ConsumerState<CreateDeliveryScreen> {
         _photoId = null;
       }),
       onKind: (k) => setState(() => _kind = k),
-      onWeight: (w) => setState(() => _weight = w),
+      onWeight: (w) => setState(() {
+        _weight = w;
+        if (!_vehicle.canCarry(w)) _vehicle = DeliveryVehicle.suggestedFor(w);
+      }),
+      vehicle: _vehicle,
+      vehiclePrices: _pickup == null || _dropoff == null
+          ? const {}
+          : {
+              for (final v in DeliveryVehicle.values)
+                v: _estimateFor(v).totalAriary,
+            },
+      onVehicle: (v) => setState(() => _vehicle = v),
       onSlot: (s) => setState(() => _slot = s),
       onPayment: (p) => setState(() => _payment = p),
     ),
@@ -329,6 +374,7 @@ class _CreateDeliveryScreenState extends ConsumerState<CreateDeliveryScreen> {
       slot: _slot,
       payment: _payment,
       estimate: _estimate,
+      vehicle: _vehicle,
     ),
   };
 }
@@ -722,8 +768,14 @@ class _PackageStep extends StatelessWidget {
     required this.onWeight,
     required this.onSlot,
     required this.onPayment,
+    required this.vehicle,
+    required this.vehiclePrices,
+    required this.onVehicle,
   });
 
+  final DeliveryVehicle vehicle;
+  final Map<DeliveryVehicle, int> vehiclePrices;
+  final ValueChanged<DeliveryVehicle> onVehicle;
   final DeliveryKind kind;
   final WeightCategory weight;
   final PickupSlot slot;
@@ -851,6 +903,19 @@ class _PackageStep extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xl),
 
+          _ModernSectionHeader(
+            title: l10n.deliveryVehicleTitle,
+            icon: Icons.local_shipping_outlined,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          VehiclePicker(
+            selected: vehicle,
+            weight: weight,
+            prices: vehiclePrices,
+            onSelected: onVehicle,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+
           TextField(
             controller: value,
             keyboardType: TextInputType.number,
@@ -936,8 +1001,29 @@ class _PackageStep extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          // Photo du colis (EXI-C09), optionnelle : elle aide le livreur a
-          // reconnaitre l'envoi et sert de preuve en cas de litige.
+          // Photo du colis (EXI-C09), obligatoire en ligne : elle fait
+          // reconnaitre l'envoi au livreur et sert de preuve en cas de litige.
+          if (photoBytes == null) ...[
+            Row(
+              children: [
+                const Icon(
+                  Icons.photo_camera_outlined,
+                  size: 18,
+                  color: AppColors.accentDark,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    l10n.pkgPhotoRequired,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
           if (photoBytes == null)
             OutlinedButton.icon(
               onPressed: () => _choosePhotoSource(context),
@@ -1205,8 +1291,10 @@ class _ReviewStep extends StatelessWidget {
     required this.slot,
     required this.payment,
     required this.estimate,
+    required this.vehicle,
   });
 
+  final DeliveryVehicle vehicle;
   final Address pickup;
   final Address dropoff;
   final DeliveryKind kind;
@@ -1252,6 +1340,13 @@ class _ReviewStep extends StatelessWidget {
                   title: dropoff.summary,
                   subtitle: dropoff.contactPhone.displayNational,
                   iconColor: Colors.blue.shade600,
+                ),
+                const Divider(height: 1, indent: 56),
+                _ReviewItem(
+                  icon: vehicle.icon,
+                  title: vehicle.label(l10n),
+                  subtitle: vehicle.hint(l10n),
+                  iconColor: AppColors.primary,
                 ),
               ],
             ),

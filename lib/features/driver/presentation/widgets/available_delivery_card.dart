@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,9 +8,10 @@ import 'package:majichrono/app/router/app_routes.dart';
 import 'package:majichrono/app/theme/app_colors.dart';
 import 'package:majichrono/app/theme/design_tokens.dart';
 import 'package:majichrono/core/error/failure.dart';
-import 'package:majichrono/core/network/api_endpoints.dart';
-import 'package:majichrono/core/providers/core_providers.dart';
 import 'package:majichrono/features/delivery/domain/entities/price_estimate.dart';
+import 'package:majichrono/features/delivery/domain/entities/delivery.dart';
+import 'package:majichrono/features/delivery/presentation/widgets/package_photo.dart';
+import 'package:majichrono/features/delivery/presentation/widgets/vehicle_picker.dart';
 import 'package:majichrono/features/driver/domain/entities/driver_entities.dart';
 import 'package:majichrono/features/driver/presentation/providers/driver_providers.dart';
 import 'package:majichrono/features/driver/presentation/widgets/package_traits.dart';
@@ -130,7 +130,6 @@ class _AvailableDeliveryCardState extends ConsumerState<AvailableDeliveryCard> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final offer = widget.offer;
     final expired = _remaining == 0;
 
@@ -143,27 +142,9 @@ class _AvailableDeliveryCardState extends ConsumerState<AvailableDeliveryCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.driverEarning,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    formatAriary(offer.estimatedEarningAriary),
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: AppColors.success,
-                    ),
-                  ),
-                ],
-              ),
-
-              _PackageThumbnail(photoId: offer.delivery.package.photoId),
-
+              // Le colis d'abord : le livreur juge une course autant sur ce
+              // qu'il va porter que sur ce qu'elle rapporte.
+              _CardHero(offer: offer),
               const SizedBox(height: AppSpacing.md),
               _Line(
                 icon: Icons.trip_origin,
@@ -234,8 +215,8 @@ class _AvailableDeliveryCardState extends ConsumerState<AvailableDeliveryCard> {
     );
   }
 
-  /// Temps estime, en minutes : distance a vide + course, a ~18 km/h (trafic
-  /// dense d'Antananarivo), plancher a 5 minutes.
+  /// Temps estime, en minutes : distance a vide + course, a ~18 km/h en
+  /// ville, plancher a 5 minutes.
   int _etaMinutes(AvailableDelivery offer) {
     final km = offer.pickupDistanceKm + offer.delivery.distanceKm;
     final minutes = (km / 18.0 * 60).round();
@@ -322,59 +303,6 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
-class _PackageThumbnail extends ConsumerWidget {
-  const _PackageThumbnail({required this.photoId});
-
-  final String? photoId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final placeholder = Container(
-      height: 96,
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Icon(
-        Icons.inventory_2_outlined,
-        size: 34,
-        color: theme.colorScheme.primary,
-      ),
-    );
-    if (photoId == null || photoId!.isEmpty) return placeholder;
-    return FutureBuilder<List<int>>(
-      future: ref
-          .read(apiClientProvider)
-          .getBytes(ApiEndpoints.mediaItem(photoId!)),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) return placeholder;
-        if (!snapshot.hasData) {
-          return const SizedBox(
-            height: 96,
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          );
-        }
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
-            height: 96,
-            width: double.infinity,
-            margin: const EdgeInsets.only(bottom: AppSpacing.md),
-            color: theme.colorScheme.surfaceContainerHighest,
-            child: Image.memory(
-              Uint8List.fromList(snapshot.data!),
-              fit: BoxFit.cover,
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
 class _Line extends StatelessWidget {
   const _Line({required this.icon, required this.text, required this.trailing});
 
@@ -399,6 +327,146 @@ class _Line extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Photo du colis en grand, avec ce qui decide d'une acceptation en
+/// surimpression : le gain en haut, le vehicule, le poids et la nature du
+/// colis en bas.
+class _CardHero extends StatelessWidget {
+  const _CardHero({required this.offer});
+
+  final AvailableDelivery offer;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final delivery = offer.delivery;
+    final weight = switch (delivery.package.weight) {
+      WeightCategory.upTo2 => l10n.pkgWeightLt2,
+      WeightCategory.from2to5 => l10n.pkgWeight2to5,
+      WeightCategory.from5to15 => l10n.pkgWeight5to15,
+      WeightCategory.over15 => l10n.pkgWeightGt15,
+    };
+    final kind = switch (delivery.kind) {
+      DeliveryKind.standard => null,
+      DeliveryKind.document => l10n.kindDocument,
+      DeliveryKind.fragile => l10n.kindFragile,
+      DeliveryKind.food => l10n.kindFood,
+      DeliveryKind.shopping => l10n.kindShopping,
+    };
+
+    return Stack(
+      children: [
+        PackagePhoto(
+          delivery: delivery,
+          height: 190,
+          borderRadius: AppRadii.componentAll,
+        ),
+        // Voile degrade : les pastilles restent lisibles sur toute photo.
+        Positioned.fill(
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: AppRadii.componentAll,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: const [0, 0.25, 0.6, 1],
+                  colors: [
+                    Colors.black.withValues(alpha: 0.35),
+                    Colors.transparent,
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.55),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: AppSpacing.sm,
+          right: AppSpacing.sm,
+          child: _Pill(
+            color: AppColors.success,
+            icon: Icons.payments_rounded,
+            label: formatAriary(offer.estimatedEarningAriary),
+            semantic: l10n.driverEarning,
+          ),
+        ),
+        Positioned(
+          left: AppSpacing.sm,
+          right: AppSpacing.sm,
+          bottom: AppSpacing.sm,
+          child: IgnorePointer(
+            child: Wrap(
+              spacing: AppSpacing.xs,
+              runSpacing: AppSpacing.xs,
+              children: [
+                if (delivery.vehicle case final vehicle?)
+                  _Pill(
+                    color: AppColors.primary,
+                    icon: vehicle.icon,
+                    label: vehicle.label(l10n),
+                  ),
+                _Pill(
+                  color: Colors.black54,
+                  icon: Icons.scale_outlined,
+                  label: weight,
+                ),
+                if (kind != null)
+                  _Pill(
+                    color: AppColors.accentDark,
+                    icon: delivery.kind.icon,
+                    label: kind,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Pill extends StatelessWidget {
+  const _Pill({
+    required this.color,
+    required this.icon,
+    required this.label,
+    this.semantic,
+  });
+
+  final Color color;
+  final IconData icon;
+  final String label;
+  final String? semantic;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: semantic == null ? label : '$semantic : $label',
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(color: color, borderRadius: AppRadii.pillAll),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: Colors.white),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
