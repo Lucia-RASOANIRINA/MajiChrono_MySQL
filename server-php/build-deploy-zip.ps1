@@ -32,10 +32,9 @@ try {
         }
     }
 
-    # .env.production (DB_HOST=localhost, APP_DEBUG=false) et non le .env de
-    # dev local : voir la note dans .env pour pourquoi le nom d'hote externe
-    # echoue depuis le serveur lui-meme.
-    Copy-Item (Join-Path $root '.env.production') (Join-Path $staging '.env')
+    # Aucun .env dans le zip : celui du serveur porte les vrais identifiants
+    # de la base et ne doit jamais etre ecrase par une mise a jour (c'est ce
+    # qui avait remis /health/ready en erreur). Modele : .env.production.example.
 
     # Contenu de public/ remonte a la racine (index.php, .htaccess, favicon...).
     Get-ChildItem (Join-Path $root 'public') | ForEach-Object {
@@ -117,6 +116,8 @@ try {
     # Journaux locaux : jamais uploades.
     Get-ChildItem (Join-Path $staging 'storage/logs') -File -ErrorAction SilentlyContinue |
         Where-Object { $_.Name -ne '.gitignore' } | Remove-Item -Force
+
+    if (Test-Path (Join-Path $staging '.env')) { throw "Un .env s'est glisse dans le zip : abandon." }
 
     if (Test-Path $out) { Remove-Item $out -Force }
     Add-Type -AssemblyName System.IO.Compression

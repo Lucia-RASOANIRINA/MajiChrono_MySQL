@@ -167,10 +167,27 @@ Le ZIP contient directement `index.php`, `.htaccess`, `app/`, `routes/` et
 racine (`.env`, `composer.*`, `artisan`) sont protégés par `.htaccess` :
 `/mobile-api/.env` doit répondre 403.
 
+Le ZIP **ne contient pas de `.env`** : celui du serveur porte les vrais
+identifiants de la base et n'est jamais écrasé par une mise à jour. Pour une
+première installation, il faut le créer sur le serveur à partir de
+`server-php/.env.production.example`.
+
 Après chaque déploiement :
 
 1. appliquer les migrations : `php artisan migrate --force` ;
-2. vérifier `/health`, puis `/health/ready` (`"status":"ready"`) ;
+2. vérifier `/health`, puis `/health/ready` (`"status":"ready"`). En cas
+   d'échec, la réponse 503 indique la cause sans exposer de secret :
+
+   | `reason` | Cause | Que faire dans le `.env` du serveur |
+   |---|---|---|
+   | `db_access_denied` | Mot de passe ou utilisateur refusé | Corriger `DB_USERNAME` et `DB_PASSWORD` |
+   | `db_no_privilege_on_database` | L'utilisateur n'a pas de droit sur la base | Donner ce droit dans DirectAdmin (MySQL) |
+   | `db_unknown_database` | Base introuvable | Corriger `DB_DATABASE` |
+   | `db_unreachable` | Serveur MySQL injoignable | Essayer `DB_HOST=127.0.0.1` ou `localhost` |
+   | `db_unknown_host` | Nom d'hôte inconnu | Corriger `DB_HOST` |
+   | `db_missing_table` | Table absente | Vérifier la base, puis lancer les migrations |
+   | `php_mysql_driver_missing` | Extension PHP `pdo_mysql` absente | L'activer dans DirectAdmin |
+
 3. vérifier qu'un fichier interne est refusé :
    `curl -s -o /dev/null -w "%{http_code}" https://majichrono.majitech.mg/mobile-api/.env`
    doit afficher `403` ;
@@ -181,8 +198,9 @@ Points de configuration de production (`.env.production`) :
 - `MAJIPAY_SANDBOX=false`. Les portefeuilles MajiPay de démonstration ne sont
   jamais crédités en production. Un règlement sans solde échoue proprement et
   bascule en espèces.
-- `JWT_SECRET` a été renouvelé le 3 octobre 2026. Au premier déploiement
-  qui l'embarque, chaque utilisateur se reconnecte une fois.
+- `JWT_SECRET` doit être une valeur longue et aléatoire, propre au serveur et
+  différente de celle du poste de développement. La changer oblige chaque
+  utilisateur à se reconnecter une fois.
 - Les points relais viennent du réglage `relay_points`, posé par un
   administrateur via `PUT /admin/settings/relay_points`. Sa valeur est un
   tableau JSON de relais (`id`, `name`, `district`, `landmark`, `point`,
